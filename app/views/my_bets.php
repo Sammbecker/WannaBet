@@ -7,23 +7,31 @@ require_once __DIR__ . '/../utils/functions.php';
 $successMessage = '';
 $errorMessage = '';
 
-// Redirect if not logged in
-if (!isset($_SESSION['user_id'])) {
+// Check if it's an AJAX request
+$isAjaxRequest = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                 strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
+
+// Redirect if not logged in (only for non-AJAX requests)
+if (!isset($_SESSION['user_id']) && !$isAjaxRequest) {
     header('Location: login.php');
     exit();
+} elseif (!isset($_SESSION['user_id']) && $isAjaxRequest) {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'errors' => ['Not logged in']]);
+    exit;
 }
 
-// Initialize controller
+// Initialize controller before any processing
 $betController = new BetController();
 
-// Process form submission
+// Process form submission first before any HTML output
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['respond_bet'])) {
         $result = $betController->respondToBet();
         
-        // If this is an AJAX request, return JSON response
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
-            strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+        // If this is an AJAX request, return JSON response and exit
+        if ($isAjaxRequest) {
+            // Ensure proper content type header is set
             header('Content-Type: application/json');
             echo json_encode($result);
             exit;
@@ -74,6 +82,11 @@ function getBetStatusClass($status) {
         default:
             return 'badge-primary';
     }
+}
+
+// Don't proceed with HTML output for AJAX requests
+if ($isAjaxRequest) {
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -543,7 +556,15 @@ function getBetStatusClass($status) {
                                         
                                         try {
                                             const formData = new FormData(e.target);
-                                            const response = await fetch('', {
+                                            formData.append('respond_bet', '1');
+                                            
+                                            // Display processing message
+                                            const submitButton = e.target.querySelector('button[type="submit"]');
+                                            const originalText = submitButton.innerHTML;
+                                            submitButton.innerHTML = 'Processing...';
+                                            submitButton.disabled = true;
+                                            
+                                            const response = await fetch(window.location.href, {
                                                 method: 'POST',
                                                 headers: {
                                                     'X-Requested-With': 'XMLHttpRequest'
@@ -552,30 +573,54 @@ function getBetStatusClass($status) {
                                             });
                                             
                                             if (!response.ok) {
-                                                throw new Error(`HTTP error! status: ${response.status}`);
+                                                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
                                             }
                                             
-                                            const result = await response.json();
+                                            // Get response content type
+                                            const contentType = response.headers.get('Content-Type');
+                                            let result;
+                                            
+                                            if (contentType && contentType.includes('application/json')) {
+                                                result = await response.json();
+                                            } else {
+                                                const text = await response.text();
+                                                console.error('Received non-JSON response:', text.substring(0, 100));
+                                                throw new Error('Server did not return a valid JSON response');
+                                            }
+                                            
+                                            // Reset button state
+                                            submitButton.innerHTML = originalText;
+                                            submitButton.disabled = false;
+                                            
+                                            console.log('Response:', result);
                                             
                                             if (result.success) {
                                                 if (result.payment_url) {
-                                                    // Redirect to payment page
+                                                    // For payment URL, we'll do a direct window location change
+                                                    console.log('Redirecting to payment URL:', result.payment_url);
                                                     window.location.href = result.payment_url;
+                                                    return; // Stop execution here
                                                 } else if (result.redirect_url) {
-                                                    // Redirect to specified URL
                                                     window.location.href = result.redirect_url;
+                                                    return; // Stop execution here
                                                 } else {
-                                                    // Show success message before reload
-                                                    alert(result.message || 'Action completed successfully');
-                                                    // Refresh the page
+                                                    alert(result.message || 'Bet response submitted successfully');
                                                     window.location.reload();
                                                 }
                                             } else {
-                                                alert(result.errors ? result.errors.join('\n') : 'An error occurred');
+                                                const errorMessage = result.errors ? result.errors.join('\n') : 'An unknown error occurred';
+                                                alert('Error: ' + errorMessage);
                                             }
                                         } catch (error) {
-                                            console.error('Error:', error);
-                                            alert('An error occurred while processing your request. Please try again.');
+                                            console.error('Error processing request:', error);
+                                            alert('Error: ' + error.message);
+                                            
+                                            // Reset buttons on error too
+                                            const submitButton = e.target.querySelector('button[type="submit"]');
+                                            if (submitButton.disabled) {
+                                                submitButton.innerHTML = submitButton.getAttribute('data-original-text') || 'Submit';
+                                                submitButton.disabled = false;
+                                            }
                                         }
                                     });
                                 });
@@ -692,13 +737,13 @@ function getBetStatusClass($status) {
                                                class="btn btn-primary">Pay Now</a>
                                         <?php else: ?>
                                             <form method="POST" class="bet-response-form" style="display: inline-block;">
-                                                <input type="hidden" name="notification_id" value="<?php echo $bet['notification_id']; ?>">
+                                                <input type="hidden" name="notification_id" value="<?php echo $bet['notification_id'] ?? ''; ?>">
                                                 <input type="hidden" name="response" value="accepted">
                                                 <button type="submit" name="respond_bet" class="btn btn-success">Accept</button>
                                             </form>
                                         <?php endif; ?>
                                         <form method="POST" class="bet-response-form" style="display: inline-block;">
-                                            <input type="hidden" name="notification_id" value="<?php echo $bet['notification_id']; ?>">
+                                            <input type="hidden" name="notification_id" value="<?php echo $bet['notification_id'] ?? ''; ?>">
                                             <input type="hidden" name="response" value="rejected">
                                             <button type="submit" name="respond_bet" class="btn btn-danger">Reject</button>
                                         </form>
@@ -802,6 +847,120 @@ function getBetStatusClass($status) {
                 modal.style.display = 'none';
             }
         }
+
+        // Add event listeners to all bet response forms
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('.bet-response-form');
+            
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(form);
+                    formData.append('respond_bet', '1');
+                    
+                    // Show loading indicator
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    const originalText = submitButton.innerHTML;
+                    submitButton.innerHTML = 'Processing...';
+                    submitButton.disabled = true;
+                    
+                    fetch(window.location.href, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        // First check if response is OK
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok: ' + response.status);
+                        }
+                        
+                        // Try to parse as JSON
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            return response.json().catch(error => {
+                                console.error('JSON parse error:', error);
+                                throw new Error('Invalid JSON response from server');
+                            });
+                        } else {
+                            // If not JSON, handle as text
+                            return response.text().then(text => {
+                                console.error('Received non-JSON response:', text.substring(0, 100) + '...');
+                                throw new Error('Unexpected response format from server');
+                            });
+                        }
+                    })
+                    .then(data => {
+                        // Reset button
+                        submitButton.innerHTML = originalText;
+                        submitButton.disabled = false;
+                        
+                        if (data.success) {
+                            // Show success message
+                            const successAlert = document.createElement('div');
+                            successAlert.className = 'alert alert-success';
+                            successAlert.innerText = data.message || 'Response submitted successfully';
+                            
+                            // Insert before the form
+                            form.parentNode.insertBefore(successAlert, form);
+                            
+                            // If there's a payment URL, redirect to it
+                            if (data.payment_url) {
+                                // Show message first
+                                successAlert.innerText = 'Redirecting to payment page...';
+                                setTimeout(() => {
+                                    window.location.href = data.payment_url;
+                                }, 1000);
+                            } else if (data.redirect_url) {
+                                // Show message first
+                                successAlert.innerText = 'Redirecting...';
+                                setTimeout(() => {
+                                    window.location.href = data.redirect_url;
+                                }, 1000);
+                            } else {
+                                // No redirect, just reload the page after a short delay
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 1500);
+                            }
+                        } else {
+                            // Show error message
+                            const errorAlert = document.createElement('div');
+                            errorAlert.className = 'alert alert-error';
+                            
+                            // Create error message
+                            if (data.errors && Array.isArray(data.errors)) {
+                                errorAlert.innerText = data.errors.join(', ');
+                            } else {
+                                errorAlert.innerText = 'An error occurred. Please try again.';
+                            }
+                            
+                            // Insert before the form
+                            form.parentNode.insertBefore(errorAlert, form);
+                        }
+                    })
+                    .catch(error => {
+                        // Reset button
+                        submitButton.innerHTML = originalText;
+                        submitButton.disabled = false;
+                        
+                        console.error('Error:', error);
+                        
+                        // Show a more descriptive error message
+                        const errorAlert = document.createElement('div');
+                        errorAlert.className = 'alert alert-error';
+                        errorAlert.innerText = 'Error processing request: ' + error.message;
+                        
+                        // Insert before the form
+                        form.parentNode.insertBefore(errorAlert, form);
+                    });
+                });
+            });
+        });
     </script>
 </body>
 </html> 

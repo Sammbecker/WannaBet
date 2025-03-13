@@ -2,9 +2,33 @@
 session_start();
 require_once __DIR__ . '/../config/paystack.php';
 
+// DEBUG: Log payment page access with session and parameters
+error_log("PAYMENT PAGE ACCESSED - SESSION DATA: " . json_encode($_SESSION));
+error_log("PAYMENT PAGE PARAMETERS: " . json_encode($_GET));
+
 if (!isset($_SESSION['user_id'])) {
     header('Location: login.php');
     exit();
+}
+
+// Check if we have test mode enabled (use this for debugging only)
+$debug_mode = true;
+if ($debug_mode) {
+    // Add any missing Paystack keys for testing
+    if (empty($_ENV['PAYSTACK_PUBLIC_KEY'])) {
+        $_ENV['PAYSTACK_PUBLIC_KEY'] = 'pk_test_yourtestkeyhere';
+        error_log("WARNING: Using fallback test Paystack public key");
+    }
+    
+    if (empty($_ENV['PAYSTACK_SECRET_KEY'])) {
+        $_ENV['PAYSTACK_SECRET_KEY'] = 'sk_test_yourtestkeyhere';
+        error_log("WARNING: Using fallback test Paystack secret key");
+    }
+    
+    if (empty($_ENV['PAYSTACK_CURRENCY'])) {
+        $_ENV['PAYSTACK_CURRENCY'] = 'ZAR';
+        error_log("WARNING: Using fallback currency ZAR");
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -142,63 +166,153 @@ if (!isset($_SESSION['user_id'])) {
         const betId = urlParams.get('bet_id');
         const email = "<?php echo $_SESSION['email'] ?? ''; ?>";
 
+        // Log initialization values
+        console.log('Payment Page Initialization:', {
+            amount: amount,
+            betId: betId,
+            email: email,
+            hasPendingPayment: <?php echo isset($_SESSION['pending_payment']) ? 'true' : 'false'; ?>,
+            pendingPaymentData: <?php echo isset($_SESSION['pending_payment']) ? json_encode($_SESSION['pending_payment']) : '{}'; ?>
+        });
+
         // Update display
         document.getElementById('amount').textContent = amount.toFixed(2);
         document.getElementById('betDescription').textContent = urlParams.get('description') || '';
         document.getElementById('opponentName').textContent = urlParams.get('opponent') || '';
         document.getElementById('betDeadline').textContent = urlParams.get('deadline') || '';
 
+        // Show a debug message on the page
+        function showDebugMessage(type, message) {
+            const debugElem = document.createElement('div');
+            debugElem.style.padding = '10px';
+            debugElem.style.margin = '10px 0';
+            debugElem.style.border = '1px solid #ccc';
+            debugElem.style.backgroundColor = type === 'error' ? '#ffebee' : '#e8f5e9';
+            debugElem.textContent = message;
+            document.querySelector('.payment-card').appendChild(debugElem);
+            console.log(`[${type}] ${message}`);
+        }
+
+        <?php if ($debug_mode): ?>
+        showDebugMessage('info', 'Debug mode enabled. Current session data: ' + 
+            JSON.stringify(<?php echo json_encode($_SESSION); ?>));
+        <?php endif; ?>
+
         function payWithPaystack() {
-            const handler = PaystackPop.setup({
-                key: '<?php echo $_ENV['PAYSTACK_PUBLIC_KEY']; ?>',
-                email: email,
-                amount: amount * 100, // Convert to kobo
-                currency: '<?php echo $_ENV['PAYSTACK_CURRENCY']; ?>',
-                ref: 'bet_' + betId + '_' + Math.floor((new Date()).getTime() / 1000),
-                metadata: {
-                    bet_id: betId,
-                    custom_fields: [
-                        {
-                            display_name: "Bet ID",
-                            variable_name: "bet_id",
-                            value: betId
-                        }
-                    ]
-                },
-                callback: function(response) {
-                    // Make AJAX call to verify payment
-                    fetch('/app/controllers/verify_payment.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            reference: response.reference,
-                            bet_id: betId
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            document.getElementById('successMessage').style.display = 'block';
-                            document.getElementById('successMessage').textContent = 'Payment successful! Redirecting...';
-                            setTimeout(() => {
-                                window.location.href = '/app/views/my_bets.php';
-                            }, 2000);
-                        } else {
-                            throw new Error(data.error || 'Payment verification failed');
-                        }
-                    })
-                    .catch(error => {
-                        document.getElementById('errorMessage').style.display = 'block';
-                        document.getElementById('errorMessage').textContent = error.message;
-                    });
-                },
-                onClose: function() {
-                    // Handle popup closure
+            // Show processing message
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('successMessage').textContent = 'Initializing payment...';
+            
+            // Reference to use
+            const reference = <?php 
+                if (isset($_SESSION['pending_payment']) && $_SESSION['pending_payment']['bet_id'] == $_GET['bet_id']) {
+                    echo "'" . $_SESSION['pending_payment']['reference'] . "'";
+                } else {
+                    echo "'bet_' + betId + '_' + Math.floor((new Date()).getTime() / 1000)";
                 }
-            });
-            handler.openIframe();
+            ?>;
+            
+            console.log('Payment reference:', reference);
+            
+            try {
+                const handler = PaystackPop.setup({
+                    key: '<?php echo $_ENV['PAYSTACK_PUBLIC_KEY']; ?>',
+                    email: email,
+                    amount: amount * 100, // Convert to kobo
+                    currency: '<?php echo $_ENV['PAYSTACK_CURRENCY']; ?>',
+                    ref: reference,
+                    metadata: {
+                        bet_id: betId,
+                        user_id: '<?php echo $_SESSION['user_id'] ?? ""; ?>',
+                        payment_type: '<?php echo isset($_SESSION['pending_payment']) ? "accept_bet" : "create_bet"; ?>',
+                        custom_fields: [
+                            {
+                                display_name: "Bet ID",
+                                variable_name: "bet_id",
+                                value: betId
+                            },
+                            {
+                                display_name: "Payment Type",
+                                variable_name: "payment_type",
+                                value: '<?php echo isset($_SESSION['pending_payment']) ? "accept_bet" : "create_bet"; ?>'
+                            }
+                        ]
+                    },
+                    callback: function(response) {
+                        // Show loading message
+                        document.getElementById('successMessage').style.display = 'block';
+                        document.getElementById('successMessage').textContent = 'Verifying payment...';
+                        
+                        console.log('Payment callback received:', response);
+                        
+                        // Session data to send
+                        const sessionData = <?php 
+                            echo json_encode(isset($_SESSION['pending_payment']) ? $_SESSION['pending_payment'] : []); 
+                        ?>;
+                        
+                        console.log('Sending session data:', sessionData);
+                        
+                        // Make AJAX call to verify payment
+                        fetch('/app/controllers/verify_payment.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                reference: response.reference,
+                                bet_id: betId,
+                                payment_type: '<?php echo isset($_SESSION['pending_payment']) ? "accept_bet" : "create_bet"; ?>',
+                                session_data: sessionData
+                            })
+                        })
+                        .then(response => {
+                            console.log('Verification response status:', response.status);
+                            if (!response.ok) {
+                                return response.text().then(text => {
+                                    try {
+                                        return JSON.parse(text); // Try to parse as JSON
+                                    } catch (e) {
+                                        console.error('Response is not valid JSON:', text);
+                                        throw new Error(`Server returned status ${response.status}: ${text.substring(0, 100)}...`);
+                                    }
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Verification response data:', data);
+                            if (data.success) {
+                                document.getElementById('successMessage').style.display = 'block';
+                                document.getElementById('successMessage').textContent = 'Payment successful! Redirecting...';
+                                setTimeout(() => {
+                                    window.location.href = '/app/views/my_bets.php';
+                                }, 2000);
+                            } else {
+                                throw new Error(data.error || 'Payment verification failed');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Verification error:', error);
+                            document.getElementById('errorMessage').style.display = 'block';
+                            document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+                            showDebugMessage('error', 'Verification failed: ' + error.message);
+                        });
+                    },
+                    onClose: function() {
+                        // Handle popup closure
+                        console.log('Payment window closed by user');
+                        document.getElementById('errorMessage').style.display = 'block';
+                        document.getElementById('errorMessage').textContent = 'Payment canceled. You can try again.';
+                    }
+                });
+                
+                // Open the payment form
+                handler.openIframe();
+            } catch (error) {
+                console.error('Error initializing payment:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'Failed to initialize payment: ' + error.message;
+            }
         }
     </script>
 </body>

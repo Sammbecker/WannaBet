@@ -1060,7 +1060,7 @@ ini_set('display_errors', 1);
                             <h3><?php echo htmlspecialchars($bet['description']); ?></h3>
                             <div class="bet-detail">
                                 <i class="fas fa-user"></i>
-                                <p>With: <?php echo htmlspecialchars($bet['opponent_name']); ?></p>
+                                <p>With: <?php echo htmlspecialchars($bet['opponent_name'] ?? 'Unknown'); ?></p>
                             </div>
                             <div class="bet-detail">
                                 <i class="fas fa-trophy"></i>

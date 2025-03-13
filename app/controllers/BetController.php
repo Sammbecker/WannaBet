@@ -66,7 +66,11 @@ class BetController {
         // For money bets, handle payment first
         if ($stakeType === 'money') {
             // Create payment intent first
-            $paymentResult = $this->paymentProcessor->createPaymentIntent(null, $stakeAmount, $userId);
+            $paymentResult = $this->paymentProcessor->createPaymentIntent(
+                amount: $stakeAmount,
+                betId: null,
+                userId: $userId
+            );
             if (!$paymentResult['success']) {
                 return ['success' => false, 'errors' => ['Payment setup failed: ' . $paymentResult['error']]];
             }
@@ -202,64 +206,106 @@ class BetController {
         $response = $_POST['response'] ?? null;
         $userId = $_SESSION['user_id'] ?? null;
         
-        if (!$notificationId || !$response || !in_array($response, ['accepted', 'rejected'])) {
-            return ['success' => false, 'errors' => ['Invalid parameters']];
+        if (!$userId) {
+            return ['success' => false, 'errors' => ['You must be logged in to respond to bets']];
         }
         
-        // Get notification details
-        $notification = $this->notificationModel->getNotificationById($notificationId);
-        if (!$notification) {
-            return ['success' => false, 'errors' => ['Notification not found']];
+        if (!$notificationId) {
+            return ['success' => false, 'errors' => ['Missing notification ID']];
         }
         
-        // Get bet details
-        $bet = $this->betModel->getBetById($notification['bet_id']);
-        if (!$bet) {
-            return ['success' => false, 'errors' => ['Bet not found']];
+        if (!$response || !in_array($response, ['accepted', 'rejected'])) {
+            return ['success' => false, 'errors' => ['Invalid response type']];
         }
-
-        // For money bets, check if payment is required
-        if ($bet['stake_type'] === 'money' && $response === 'accepted') {
-            // Initialize payment with current user's ID
-            $paymentResult = $this->paymentProcessor->createPaymentIntent($bet['bet_id'], $bet['stake_amount'], $userId);
-            if (!$paymentResult['success']) {
-                return ['success' => false, 'errors' => ['Payment setup failed: ' . $paymentResult['error']]];
-            }
-
-            // Store the payment reference in session for verification after redirect
-            $_SESSION['pending_payment'] = [
-                'reference' => $paymentResult['reference'],
-                'notification_id' => $notificationId,
-                'bet_id' => $bet['bet_id']
-            ];
-
-            // Return payment URL and redirect flag
-            return [
-                'success' => true,
-                'message' => 'Please complete the payment to accept the bet',
-                'payment_url' => $paymentResult['authorization_url'],
-                'requires_payment' => true,
-                'redirect' => true
-            ];
-        }
-
-        // Update notification status
-        $result = $this->notificationModel->updateStatus($notificationId, $response);
         
-        if ($result) {
-            // Update the bet status if accepted
-            if ($response === 'accepted') {
-                $this->betModel->updateBetStatus($notification['bet_id'], 'active');
+        try {
+            // Get notification details
+            $notification = $this->notificationModel->getNotificationById($notificationId);
+            if (!$notification) {
+                return ['success' => false, 'errors' => ['Notification not found']];
             }
             
-            return [
-                'success' => true, 
-                'message' => 'Response submitted successfully',
-                'redirect' => true,
-                'redirect_url' => 'my_bets.php'
-            ];
-        } else {
-            return ['success' => false, 'errors' => ['Failed to submit response']];
+            // Get bet details
+            $bet = $this->betModel->getBetById($notification['bet_id']);
+            if (!$bet) {
+                return ['success' => false, 'errors' => ['Bet not found']];
+            }
+    
+            // For money bets requiring payment
+            if ($bet['stake_type'] === 'money' && $response === 'accepted') {
+                try {
+                    // First update notification status to ensure proper bet acceptance
+                    $this->notificationModel->updateStatus($notificationId, $response);
+
+                    // Initialize payment with current user's ID
+                    $paymentResult = $this->paymentProcessor->createPaymentIntent(
+                        amount: $bet['stake_amount'],
+                        betId: $bet['bet_id'],
+                        userId: $userId
+                    );
+                    if (!$paymentResult['success']) {
+                        throw new Exception('Payment setup failed: ' . ($paymentResult['error'] ?? 'Unknown error'));
+                    }
+
+                    // Store the payment reference in session for verification after redirect
+                    $_SESSION['pending_payment'] = [
+                        'reference' => $paymentResult['reference'],
+                        'notification_id' => $notificationId,
+                        'bet_id' => $bet['bet_id'],
+                        'action' => 'accept_bet'
+                    ];
+
+                    // Log payment attempt
+                    error_log("Redirecting to payment URL: " . $paymentResult['authorization_url']);
+
+                    // Return payment URL and redirect flag
+                    return [
+                        'success' => true,
+                        'message' => 'Please complete the payment to accept the bet',
+                        'payment_url' => $paymentResult['authorization_url'],
+                        'requires_payment' => true,
+                        'redirect' => true
+                    ];
+                } catch (Exception $e) {
+                    error_log("Error in respondToBet for money bet: " . $e->getMessage());
+                    return ['success' => false, 'errors' => [$e->getMessage()]];
+                }
+            } else if ($response === 'rejected') {
+                // For rejected bets
+                $result = $this->notificationModel->updateStatus($notificationId, $response);
+                if (!$result) {
+                    return ['success' => false, 'errors' => ['Failed to reject bet']];
+                }
+                
+                return [
+                    'success' => true, 
+                    'message' => 'Bet rejected successfully',
+                    'redirect' => true,
+                    'redirect_url' => 'my_bets.php'
+                ];
+            } else {
+                // For non-money bets or other responses
+                $result = $this->notificationModel->updateStatus($notificationId, $response);
+                
+                if ($result) {
+                    // Update the bet status if accepted
+                    if ($response === 'accepted') {
+                        $this->betModel->updateBetStatus($notification['bet_id'], 'active');
+                    }
+                    
+                    return [
+                        'success' => true, 
+                        'message' => 'Response submitted successfully',
+                        'redirect' => true,
+                        'redirect_url' => 'my_bets.php'
+                    ];
+                } else {
+                    return ['success' => false, 'errors' => ['Failed to submit response']];
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error in respondToBet: " . $e->getMessage());
+            return ['success' => false, 'errors' => [$e->getMessage()]];
         }
     }
     
