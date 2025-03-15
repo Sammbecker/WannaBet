@@ -63,29 +63,7 @@ class BetController {
             $stakeDescription = $_POST['stake_description'];
         }
 
-        // For money bets, handle payment first
-        if ($stakeType === 'money') {
-            // Create payment intent first
-            $paymentResult = $this->paymentProcessor->createPaymentIntent(
-                amount: $stakeAmount,
-                betId: null,
-                userId: $userId
-            );
-            if (!$paymentResult['success']) {
-                return ['success' => false, 'errors' => ['Payment setup failed: ' . $paymentResult['error']]];
-            }
-
-            // Store payment reference for later
-            $paymentReference = $paymentResult['reference'];
-            $paymentUrl = $paymentResult['authorization_url'];
-
-            // For pay_later option, proceed with bet creation
-            if ($paymentPreference === 'pay_later') {
-                $paymentUrl = null;
-            }
-        }
-
-        // Create bet
+        // Create bet data
         $betData = [
             'user_id' => $userId,
             'opponent_id' => $_POST['opponent_id'],
@@ -98,8 +76,59 @@ class BetController {
             'payment_status' => ($stakeType === 'money' ? 'pending' : null)
         ];
 
-        // Only create bet if it's not a money bet or if it's pay_later
-        if ($stakeType !== 'money' || $paymentPreference === 'pay_later') {
+        // For money bets with pay_now, handle payment
+        $paymentUrl = null;
+        $paymentReference = null;
+
+        if ($stakeType === 'money' && $paymentPreference === 'pay_now') {
+            // First create the bet so we have a bet ID
+            $betId = $this->betModel->createBet($betData);
+            if (!$betId) {
+                return ['success' => false, 'errors' => ['Failed to create bet']];
+            }
+
+            // Now create payment intent with the proper bet ID
+            $paymentResult = $this->paymentProcessor->createPaymentIntent(
+                amount: $stakeAmount,
+                betId: $betId,
+                userId: $userId
+            );
+            
+            if (!$paymentResult['success']) {
+                // Rollback bet creation if payment setup fails
+                $this->betModel->deleteBet($betId);
+                return ['success' => false, 'errors' => ['Payment setup failed: ' . ($paymentResult['error'] ?? 'Unknown error')]];
+            }
+
+            // Store payment reference and URL
+            $paymentReference = $paymentResult['reference'];
+            $paymentUrl = $paymentResult['authorization_url'] ?? $paymentResult['checkout_url'];
+
+            // Store the payment reference in session for verification after redirect
+            $_SESSION['pending_payment'] = [
+                'reference' => $paymentReference,
+                'bet_id' => $betId,
+                'user_id' => $userId,
+                'amount' => $stakeAmount,
+                'action' => 'create_bet'
+            ];
+
+            // Create notification
+            $notificationData = [
+                'bet_id' => $betId,
+                'user_id' => $_POST['opponent_id'],
+                'type' => 'bet_invitation',
+                'message' => 'You have been invited to a new bet!'
+            ];
+
+            $notificationId = $this->notificationModel->createNotification($notificationData);
+            if (!$notificationId) {
+                // Rollback bet creation
+                $this->betModel->deleteBet($betId);
+                return ['success' => false, 'errors' => ['Failed to create notification']];
+            }
+        } else {
+            // For pay_later or non-money bets, just create the bet
             $betId = $this->betModel->createBet($betData);
             if (!$betId) {
                 return ['success' => false, 'errors' => ['Failed to create bet']];
@@ -123,7 +152,8 @@ class BetController {
 
         $response = [
             'success' => true,
-            'message' => 'Bet created successfully'
+            'message' => 'Bet created successfully',
+            'bet_id' => $betId
         ];
 
         if ($paymentUrl) {

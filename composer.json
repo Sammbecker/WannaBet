@@ -3,6 +3,7 @@
     "description": "A betting app with secure payments",
     "require": {
         "stripe/stripe-php": "^10.0",
-        "yabacon/paystack-php": "^2.2"
+        "yabacon/paystack-php": "^2.2",
+        "guzzlehttp/guzzle": "^7.0"
     }
 }

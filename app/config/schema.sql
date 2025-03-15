@@ -77,15 +77,28 @@ CREATE TABLE IF NOT EXISTS Transactions (
 CREATE TABLE IF NOT EXISTS PaymentIntents (
     payment_intent_id INT PRIMARY KEY AUTO_INCREMENT,
     bet_id INT NOT NULL,
-    stripe_payment_intent_id VARCHAR(255) COMMENT 'Stores Paystack reference',
+    payment_reference VARCHAR(255) COMMENT 'Stores Peach Payments merchantTransactionId',
     amount DECIMAL(10,2) NOT NULL,
     status VARCHAR(50) NOT NULL DEFAULT 'pending',
-    transfer_id VARCHAR(255) DEFAULT NULL,
+    payout_reference VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    paystack_access_code VARCHAR(255) DEFAULT NULL,
     verification_status VARCHAR(50) DEFAULT 'pending',
     FOREIGN KEY (bet_id) REFERENCES Bets(bet_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Create Payouts table for tracking winner payouts
+CREATE TABLE IF NOT EXISTS Payouts (
+    payout_id INT PRIMARY KEY AUTO_INCREMENT,
+    bet_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    reference VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (bet_id) REFERENCES Bets(bet_id),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Create index on frequently accessed columns
