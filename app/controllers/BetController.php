@@ -113,6 +113,13 @@ class BetController {
                 'action' => 'create_bet'
             ];
 
+            // Log the payment data
+            error_log("Setting up payment for new bet. Data: " . json_encode([
+                'reference' => $paymentReference,
+                'bet_id' => $betId,
+                'payment_url' => $paymentUrl
+            ]));
+
             // Create notification
             $notificationData = [
                 'bet_id' => $betId,

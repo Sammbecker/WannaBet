@@ -1,4 +1,8 @@
 <?php
+// Error handling - disable HTML error output
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 session_start();
 require_once __DIR__ . '/../models/PaymentProcessor.php';
 
@@ -8,6 +12,20 @@ $api_mode = isset($_GET['api']) && $_GET['api'] === 'true';
 // In API mode, set content type to JSON
 if ($api_mode) {
     header('Content-Type: application/json');
+    
+    // Set error handler for API mode to capture any PHP errors
+    set_error_handler(function($errno, $errstr, $errfile, $errline) {
+        // Log the error
+        error_log("PHP Error in payment_callback.php: [$errno] $errstr in $errfile on line $errline");
+        
+        // Return JSON error response
+        echo json_encode([
+            'success' => false,
+            'error' => 'Server error occurred',
+            'debug' => "Error [$errno]: $errstr"
+        ]);
+        exit;
+    });
 }
 
 // Log access
@@ -18,88 +36,104 @@ if (!isset($_SESSION['user_id'])) {
     error_log("User not logged in in callback, continuing anyway");
 }
 
-// Check for required parameters
-if (!isset($_GET['bet_id']) && !$api_mode) {
-    error_log("Missing required bet_id parameter");
+try {
+    // Check for required parameters
+    if (!isset($_GET['bet_id']) && !$api_mode) {
+        error_log("Missing required bet_id parameter");
+        
+        if ($api_mode) {
+            echo json_encode(['success' => false, 'error' => 'Missing bet_id parameter']);
+            exit;
+        } else {
+            header("Location: my_bets.php?error=missing_parameters");
+            exit;
+        }
+    }
+
+    // Get the bet ID
+    $bet_id = $_GET['bet_id'] ?? null;
+
+    // Check for payment success parameter (from Peach Payments)
+    $payment_success = isset($_GET['success']) && $_GET['success'] === 'true';
+    $payment_reference = $_GET['merchantTransactionId'] ?? $_GET['reference'] ?? ($_SESSION['pending_payment']['reference'] ?? null);
+
+    // Log the callback parameters
+    error_log("Payment callback parameters: " . json_encode([
+        'bet_id' => $bet_id,
+        'payment_success' => $payment_success,
+        'payment_reference' => $payment_reference
+    ]));
+
+    // If we have a reference, verify the payment
+    if ($payment_reference) {
+        try {
+            $paymentProcessor = new PaymentProcessor();
+            $result = $paymentProcessor->verifyPayment($payment_reference);
+            error_log("Payment verification result: " . json_encode($result));
+            
+            if ($result['success']) {
+                // Payment was successful
+                $success = true;
+                $message = "Payment processed successfully";
+            } else {
+                // Payment failed or couldn't be verified
+                $success = false;
+                $message = $result['error'] ?? "Payment verification failed";
+            }
+        } catch (Exception $e) {
+            error_log("Error verifying payment: " . $e->getMessage());
+            $success = false;
+            $message = "An error occurred while verifying your payment";
+        }
+    } else {
+        // No payment reference found
+        $success = false;
+        $message = "Payment reference not found";
+    }
+
+    // Determine redirect URL
+    $redirect_url = "my_bets.php";
+    if ($success) {
+        $redirect_url .= "?payment_success=true&bet_id=" . urlencode($bet_id ?? '');
+    } else {
+        $redirect_url .= "?payment_error=" . urlencode($message) . "&bet_id=" . urlencode($bet_id ?? '');
+    }
+
+    // For API mode, return JSON response
+    if ($api_mode) {
+        $response = [
+            'success' => $success,
+            'message' => $message,
+            'redirect_url' => $redirect_url
+        ];
+        
+        if ($success) {
+            $response['bet_id'] = $result['bet_id'] ?? $bet_id;
+            $response['test_mode'] = $result['test_mode'] ?? false;
+        } else {
+            $response['error'] = $message;
+        }
+        
+        echo json_encode($response);
+        exit;
+    }
+} catch (Exception $e) {
+    error_log("Unhandled exception in payment_callback.php: " . $e->getMessage());
     
     if ($api_mode) {
-        echo json_encode(['success' => false, 'error' => 'Missing bet_id parameter']);
-        exit;
-    } else {
-        header("Location: my_bets.php?error=missing_parameters");
+        echo json_encode([
+            'success' => false,
+            'error' => 'Server error occurred',
+            'debug' => $e->getMessage()
+        ]);
         exit;
     }
-}
-
-// Get the bet ID
-$bet_id = $_GET['bet_id'] ?? null;
-
-// Check for payment success parameter (from Peach Payments)
-$payment_success = isset($_GET['success']) && $_GET['success'] === 'true';
-$payment_reference = $_GET['merchantTransactionId'] ?? $_GET['reference'] ?? ($_SESSION['pending_payment']['reference'] ?? null);
-
-// Log the callback parameters
-error_log("Payment callback parameters: " . json_encode([
-    'bet_id' => $bet_id,
-    'payment_success' => $payment_success,
-    'payment_reference' => $payment_reference
-]));
-
-// If we have a reference, verify the payment
-if ($payment_reference) {
-    try {
-        $paymentProcessor = new PaymentProcessor();
-        $result = $paymentProcessor->verifyPayment($payment_reference);
-        error_log("Payment verification result: " . json_encode($result));
-        
-        if ($result['success']) {
-            // Payment was successful
-            $success = true;
-            $message = "Payment processed successfully";
-        } else {
-            // Payment failed or couldn't be verified
-            $success = false;
-            $message = $result['error'] ?? "Payment verification failed";
-        }
-    } catch (Exception $e) {
-        error_log("Error verifying payment: " . $e->getMessage());
-        $success = false;
-        $message = "An error occurred while verifying your payment";
-    }
-} else {
-    // No payment reference found
+    
     $success = false;
-    $message = "Payment reference not found";
+    $message = "An error occurred while processing your payment";
 }
 
-// Determine redirect URL
-$redirect_url = "my_bets.php";
-if ($success) {
-    $redirect_url .= "?payment_success=true&bet_id=" . urlencode($bet_id ?? '');
-} else {
-    $redirect_url .= "?payment_error=" . urlencode($message) . "&bet_id=" . urlencode($bet_id ?? '');
-}
-
-// For API mode, return JSON response
-if ($api_mode) {
-    $response = [
-        'success' => $success,
-        'message' => $message,
-        'redirect_url' => $redirect_url
-    ];
-    
-    if ($success) {
-        $response['bet_id'] = $result['bet_id'] ?? $bet_id;
-        $response['test_mode'] = $result['test_mode'] ?? false;
-    } else {
-        $response['error'] = $message;
-    }
-    
-    echo json_encode($response);
-    exit;
-}
-
-// Auto-redirect after a few seconds
+// Auto-redirect after a few seconds (HTML view)
 ?>
 <!DOCTYPE html>
 <html lang="en">

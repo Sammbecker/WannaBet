@@ -118,9 +118,9 @@ class PaymentProcessor {
                     'email' => $this->getUserEmail($userId) ?? 'guest@example.com'
                 ],
                 'redirectUrls' => [
-                    'success' => $_ENV['APP_URL'] . '/app/views/payment_callback.php?success=true&reference=' . $merchantTransactionId,
-                    'failure' => $_ENV['APP_URL'] . '/app/views/payment_callback.php?success=false&reference=' . $merchantTransactionId,
-                    'cancel' => $_ENV['APP_URL'] . '/app/views/payment_callback.php?status=cancelled&reference=' . $merchantTransactionId
+                    'success' => $_ENV['APP_URL'] . '/payment_callback.php?success=true&reference=' . $merchantTransactionId,
+                    'failure' => $_ENV['APP_URL'] . '/payment_callback.php?success=false&reference=' . $merchantTransactionId,
+                    'cancel' => $_ENV['APP_URL'] . '/payment_callback.php?status=cancelled&reference=' . $merchantTransactionId
                 ]
             ];
 
@@ -147,7 +147,7 @@ class PaymentProcessor {
                 }
                 
                 // Simulate the return URL for payment callback in test mode - use the proper path
-                $testCheckoutUrl = '/app/views/payment_callback.php?success=true&reference=' . 
+                $testCheckoutUrl = '/payment_callback.php?success=true&reference=' . 
                     urlencode($merchantTransactionId) . 
                     '&bet_id=' . urlencode($betId ?? 'new');
                 
