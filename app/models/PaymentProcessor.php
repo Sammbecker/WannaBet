@@ -6,6 +6,23 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 
+/**
+ * PaymentProcessor class for handling Peach Payments integration
+ * 
+ * This class provides methods for:
+ * 1. Creating payment intents (redirect-based checkout)
+ * 2. Processing payment callbacks
+ * 3. Validating webhook signatures
+ * 4. Processing payouts
+ * 
+ * The Peach Payments flow is as follows:
+ * - We initiate a redirect-based checkout by calling the Peach Payments API
+ * - The API returns a redirect URL where the user completes their payment
+ * - After payment, the user is redirected back to our shopperResultUrl
+ * - Additionally, Peach sends webhook notifications to our notificationUrl
+ * 
+ * Reference: https://developer.peachpayments.com/reference/post_checkout-initiate
+ */
 class PaymentProcessor {
     private $entityId;
     private $signature;
@@ -44,7 +61,15 @@ class PaymentProcessor {
                 error_log("Warning: notificationUrl doesn't match Peach Payments URL pattern: " . $data['notificationUrl']);
             }
             
-            // Use form data instead of JSON as shown in the Peach Payments example
+            // Add required Peach Payments parameters
+            $data['entityId'] = $this->entityId;
+            
+            // Generate signature if not already provided
+            if (!isset($data['signature'])) {
+                $data['signature'] = $this->signature;
+            }
+            
+            // Use form data instead of JSON as required by Peach Payments
             $response = $this->client->request('POST', $this->apiUrl, [
                 'form_params' => $data
             ]);
@@ -107,21 +132,27 @@ class PaymentProcessor {
             // Generate merchant transaction ID
             $merchantTransactionId = $this->generateTransactionReference();
             
-            // Prepare API request data
+            // Preparing callback URLs using APP_BASE_URL to ensure they pass Peach validation
+            $appBaseUrl = rtrim($_ENV['APP_BASE_URL'], '/');
+            $callbackPath = '/app/views/payment_callback.php';
+            
+            // Prepare API request data according to Peach Payments documentation
             $data = [
-                'amount' => $amount,
-                'currency' => 'USD', // Change as needed
+                // Required parameters
+                'entityId' => $this->entityId,
+                'amount' => number_format($amount, 2, '.', ''),
+                'currency' => $_ENV['PEACH_CURRENCY'] ?? 'ZAR',
                 'merchantTransactionId' => $merchantTransactionId,
-                'purpose' => 'Bet payment',
-                'customer' => [
-                    'id' => $userId ?? 'guest',
-                    'email' => $this->getUserEmail($userId) ?? 'guest@example.com'
-                ],
-                'redirectUrls' => [
-                    'success' => $_ENV['APP_URL'] . '/payment_callback.php?success=true&reference=' . $merchantTransactionId,
-                    'failure' => $_ENV['APP_URL'] . '/payment_callback.php?success=false&reference=' . $merchantTransactionId,
-                    'cancel' => $_ENV['APP_URL'] . '/payment_callback.php?status=cancelled&reference=' . $merchantTransactionId
-                ]
+                'paymentType' => 'DB', // DB for Debit
+                
+                // URLs
+                'shopperResultUrl' => $appBaseUrl . $callbackPath . '?success=true&merchantTransactionId=' . $merchantTransactionId . '&bet_id=' . ($betId ?? 'new'),
+                'cancelUrl' => $appBaseUrl . $callbackPath . '?success=false&merchantTransactionId=' . $merchantTransactionId . '&bet_id=' . ($betId ?? 'new'),
+                'notificationUrl' => $appBaseUrl . '/app/api/payment_callback.php?merchantTransactionId=' . $merchantTransactionId,
+                
+                // Custom parameters for our app
+                'customParameters[bet_id]' => $betId ?? 'new',
+                'customParameters[user_id]' => $userId ?? 'guest'
             ];
 
             // In test mode, simulate a successful Peach Payments response
@@ -147,7 +178,7 @@ class PaymentProcessor {
                 }
                 
                 // Simulate the return URL for payment callback in test mode - use the proper path
-                $testCheckoutUrl = '/payment_callback.php?success=true&reference=' . 
+                $testCheckoutUrl = '/app/views/payment_callback.php?success=true&reference=' . 
                     urlencode($merchantTransactionId) . 
                     '&bet_id=' . urlencode($betId ?? 'new');
                 
@@ -164,7 +195,7 @@ class PaymentProcessor {
             $response = $this->makePeachRequest($data);
                 
             if (!$response['success']) {
-                throw new Exception($response['message'] ?? 'Payment API request failed');
+                throw new Exception($response['error'] ?? 'Payment API request failed');
             }
             
             // Store payment intent in database if bet exists
@@ -180,15 +211,15 @@ class PaymentProcessor {
                         'pending'
                     ]);
                 } catch (Exception $dbError) {
-                    // Log but don't fail - this is just for testing
-                    error_log("Test mode DB error: " . $dbError->getMessage());
+                    error_log("Database error when storing payment intent: " . $dbError->getMessage());
                 }
             }
 
+            // The redirect URL should be in response.data.redirect
             return [
                 'success' => true,
-                'checkout_url' => $response['data']['checkoutUrl'] ?? $response['data']['redirect']['url'] ?? null,
-                'authorization_url' => $response['data']['checkoutUrl'] ?? $response['data']['redirect']['url'] ?? null,
+                'checkout_url' => $response['data']['redirect'] ?? null,
+                'authorization_url' => $response['data']['redirect'] ?? null,
                 'reference' => $merchantTransactionId
             ];
         } catch (Exception $e) {
@@ -538,5 +569,50 @@ class PaymentProcessor {
             error_log("Error fetching user email: " . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Validates a webhook signature from Peach Payments
+     * 
+     * @param array $params The webhook parameters
+     * @param string $receivedSignature The signature received in the webhook
+     * @return bool Whether the signature is valid
+     */
+    public function validateWebhookSignature($params, $receivedSignature) {
+        // If we're in test mode, skip signature validation
+        if ($_ENV['PEACH_ENVIRONMENT'] === 'test') {
+            error_log("TEST MODE: Skipping webhook signature validation");
+            return true;
+        }
+        
+        // Make sure we have the necessary parameters
+        if (!isset($params['merchantTransactionId']) || !isset($params['id'])) {
+            error_log("Missing required parameters for webhook signature validation");
+            return false;
+        }
+        
+        // Get parameters that should be included in the signature
+        $signatureParams = [
+            'id' => $params['id'],
+            'merchantTransactionId' => $params['merchantTransactionId'],
+            'amount' => $params['amount'] ?? '',
+            'currency' => $params['currency'] ?? '',
+            'paymentType' => $params['paymentType'] ?? ''
+        ];
+        
+        // Sort parameters alphabetically by key as per Peach Payments docs
+        ksort($signatureParams);
+        
+        // Concatenate the values with the shared secret
+        $signatureData = implode('', array_values($signatureParams)) . $this->signature;
+        
+        // Calculate the signature (SHA-256)
+        $calculatedSignature = hash('sha256', $signatureData);
+        
+        // Debug log
+        error_log("Webhook signature validation: Calculated=" . $calculatedSignature . ", Received=" . $receivedSignature);
+        
+        // Compare the calculated signature with the received one
+        return hash_equals($calculatedSignature, $receivedSignature);
     }
 } 

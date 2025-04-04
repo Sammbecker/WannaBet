@@ -55,13 +55,20 @@ try {
 
     // Check for payment success parameter (from Peach Payments)
     $payment_success = isset($_GET['success']) && $_GET['success'] === 'true';
-    $payment_reference = $_GET['merchantTransactionId'] ?? $_GET['reference'] ?? ($_SESSION['pending_payment']['reference'] ?? null);
+    
+    // Peach Payments can return either merchantTransactionId or id as the reference
+    $payment_reference = $_GET['merchantTransactionId'] ?? $_GET['id'] ?? $_GET['reference'] ?? ($_SESSION['pending_payment']['reference'] ?? null);
 
+    // Look for Peach Payment response data (id usually contains the transaction ID)
+    $peach_transaction_id = $_GET['id'] ?? null;
+    
     // Log the callback parameters
     error_log("Payment callback parameters: " . json_encode([
         'bet_id' => $bet_id,
         'payment_success' => $payment_success,
-        'payment_reference' => $payment_reference
+        'payment_reference' => $payment_reference,
+        'peach_transaction_id' => $peach_transaction_id,
+        'all_params' => $_GET
     ]));
 
     // If we have a reference, verify the payment
@@ -92,7 +99,7 @@ try {
     }
 
     // Determine redirect URL
-    $redirect_url = "my_bets.php";
+    $redirect_url = "/app/views/my_bets.php";
     if ($success) {
         $redirect_url .= "?payment_success=true&bet_id=" . urlencode($bet_id ?? '');
     } else {
