@@ -9,9 +9,12 @@ class Database {
     private $pdo;
     
     private function __construct() {
-        $dsn = "mysql:host=localhost;dbname=betting_app";
-        $username = "root"; 
-        $password = ""; // Default XAMPP MySQL password is empty
+        $host = getenv('DB_HOST') ?: 'localhost';
+        $dbname = getenv('DB_NAME') ?: 'betting_app';
+        $username = getenv('DB_USER') ?: 'root';
+        $password = getenv('DB_PASS') ?: '';
+        
+        $dsn = "mysql:host=$host;dbname=$dbname";
         
         try {
             $this->pdo = new PDO($dsn, $username, $password);
