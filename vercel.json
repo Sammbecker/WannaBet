@@ -2,8 +2,11 @@
   "version": 2,
   "builds": [
     {
-      "src": "public/**/*.php",
-      "use": "@vercel/php"
+      "src": "vercel-build.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "public"
+      }
     }
   ],
   "routes": [
@@ -11,5 +14,8 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ]
+  ],
+  "env": {
+    "PHP_VERSION": "8.2"
+  }
 } 

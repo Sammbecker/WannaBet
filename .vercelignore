@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+vendor
+.env
+*.log
+*.sql
+*.bat
+*.sh
+desktop.ini 
