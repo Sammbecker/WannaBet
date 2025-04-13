@@ -698,7 +698,7 @@ if (isset($_SESSION['user_id'])) {
                 </div>
             </div>
             <div class="copyright">
-                &copy; 2025 WannaBet. All rights reserved.
+                &copy; 2025 WannaBet. All rights reserved. Created by Karla, Dan, and Ruby.
             </div>
         </div>
     </footer>
