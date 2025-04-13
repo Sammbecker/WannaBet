@@ -362,6 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="login-footer">
                 <p>Don't have an account? <a href="/WannaBet/register">Sign up</a></p>
+                <p>&copy; 2025 WannaBet. All rights reserved. Created by Karla, Dan, and Ruby.</p>
             </div>
         </div>
     </div>
