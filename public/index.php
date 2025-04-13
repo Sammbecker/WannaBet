@@ -632,21 +632,22 @@ if (isset($_SESSION['user_id'])) {
                 <div class="testimonial">
                     <div class="testimonial-content">
                         <p>"WannaBet has completely changed how my friends and I handle our friendly wagers. No more awkward reminders or forgotten bets - everything is tracked clearly."</p>
-                        <div class="testimonial-author">- Alex R.</div>
+                        <div class="testimonial-author">- Karla L.</div>
                     </div>
                 </div>
                 <div class="testimonial">
                     <div class="testimonial-content">
                         <p>"I love the favor betting feature! It's not always about money - sometimes the stakes are lunch or household chores. WannaBet makes it fun and easy to track."</p>
-                        <div class="testimonial-author">- Sam T.</div>
+                        <div class="testimonial-author">- Dan T.</div>
                     </div>
                 </div>
                 <div class="testimonial">
                     <div class="testimonial-content">
                         <p>"The trust score system keeps everyone honest, and the payment integration means we can settle up without hassle. Highly recommend!"</p>
-                        <div class="testimonial-author">- Jordan K.</div>
+                        <div class="testimonial-author">- Ruby D.</div>
                     </div>
                 </div>
+                
             </div>
             <div class="testimonial-controls">
                 <div class="testimonial-dot active" data-slide="0"></div>
@@ -697,8 +698,9 @@ if (isset($_SESSION['user_id'])) {
                     </ul>
                 </div>
             </div>
-            <div class="copyright">
-                &copy; 2025 WannaBet. All rights reserved. Created by Karla, Dan, and Ruby.
+            <div class="footer">
+                <p>Don't have an account? <a href="/WannaBet/register">Sign up</a></p>
+                <p>&copy; 2025 WannaBet. All rights reserved. Created by Karla, Dan, and Ruby.</p>
             </div>
         </div>
     </footer>
