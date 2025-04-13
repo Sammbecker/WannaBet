@@ -20,13 +20,13 @@ class Bet {
             error_log("Starting bet creation with data: " . json_encode($data));
             
             // Insert bet
-            $sql = "INSERT INTO Bets (
-                user_id, 
+            $sql = "INSERT INTO bets (
+                creator_id, 
+                title,
                 description, 
                 stake_type,
                 stake_amount,
                 stake_description,
-                deadline,
                 status
             ) VALUES (?, ?, ?, ?, ?, ?, 'pending')";
             
@@ -37,11 +37,11 @@ class Bet {
             
             $params = [
                 $data['user_id'],
+                $data['title'] ?? '',
                 $data['description'],
                 $data['stake_type'],
                 $data['stake_amount'],
-                $data['stake_description'],
-                $data['deadline']
+                $data['stake_description']
             ];
             
             // Debug log
@@ -76,9 +76,9 @@ class Bet {
      */
     public function getBetById($betId) {
         $sql = "SELECT b.*, u.username as creator_username 
-                FROM Bets b 
-                JOIN Users u ON b.user_id = u.user_id 
-                WHERE b.bet_id = ?";
+                FROM bets b 
+                JOIN users u ON b.creator_id = u.id 
+                WHERE b.id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$betId]);
         
@@ -90,8 +90,8 @@ class Bet {
      */
     public function getAllBets() {
         $sql = "SELECT b.*, u.username as creator_username 
-                FROM Bets b 
-                JOIN Users u ON b.user_id = u.user_id 
+                FROM bets b 
+                JOIN users u ON b.creator_id = u.id 
                 ORDER BY b.created_at DESC";
         $stmt = $this->db->query($sql);
         
@@ -106,12 +106,12 @@ class Bet {
                 u.username as creator_username,
                 u2.username as opponent_username,
                 COALESCE(pi.status, 'pending') as payment_status
-                FROM Bets b
-                JOIN Users u ON b.user_id = u.user_id
-                LEFT JOIN Notifications n ON b.bet_id = n.bet_id
-                LEFT JOIN Users u2 ON n.user_id = u2.user_id
-                LEFT JOIN PaymentIntents pi ON b.bet_id = pi.bet_id AND pi.status = 'pending'
-                WHERE b.user_id = ? 
+                FROM bets b
+                JOIN users u ON b.creator_id = u.id
+                LEFT JOIN notifications n ON b.id = n.bet_id
+                LEFT JOIN users u2 ON n.user_id = u2.id
+                LEFT JOIN paymentintents pi ON b.id = pi.bet_id AND pi.status = 'pending'
+                WHERE b.creator_id = ? 
                 ORDER BY b.created_at DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
@@ -131,12 +131,12 @@ class Bet {
                     WHEN b.stake_type = 'money' AND pi.status = 'pending' THEN true
                     ELSE false
                 END as payment_required
-                FROM Bets b
-                JOIN Users u ON b.user_id = u.user_id
-                LEFT JOIN Notifications n ON b.bet_id = n.bet_id
-                LEFT JOIN Users u2 ON n.user_id = u2.user_id
-                LEFT JOIN PaymentIntents pi ON b.bet_id = pi.bet_id AND pi.status = 'pending'
-                WHERE b.user_id = ? 
+                FROM bets b
+                JOIN users u ON b.creator_id = u.id
+                LEFT JOIN notifications n ON b.id = n.bet_id
+                LEFT JOIN users u2 ON n.user_id = u2.id
+                LEFT JOIN paymentintents pi ON b.id = pi.bet_id AND pi.status = 'pending'
+                WHERE b.creator_id = ? 
                 ORDER BY b.created_at DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
@@ -148,7 +148,7 @@ class Bet {
      * Update bet status
      */
     public function updateBetStatus($betId, $status) {
-        $sql = "UPDATE Bets SET status = ? WHERE bet_id = ?";
+        $sql = "UPDATE bets SET status = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -162,7 +162,7 @@ class Bet {
      * Send bet invitation to another user
      */
     public function inviteUserToBet($betId, $userId) {
-        $sql = "INSERT INTO Notifications (bet_id, user_id, type, status) VALUES (?, ?, 'bet_invitation', 'pending')";
+        $sql = "INSERT INTO notifications (bet_id, user_id, type, status) VALUES (?, ?, 'bet_invitation', 'pending')";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -176,7 +176,7 @@ class Bet {
      * Accept or reject a bet
      */
     public function respondToBet($notificationId, $response) {
-        $sql = "UPDATE Notifications SET status = ? WHERE notification_id = ?";
+        $sql = "UPDATE notifications SET status = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -190,7 +190,7 @@ class Bet {
      * Delete a bet
      */
     public function deleteBet($betId) {
-        $sql = "DELETE FROM Bets WHERE bet_id = ?";
+        $sql = "DELETE FROM bets WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -216,7 +216,7 @@ class Bet {
         // Add bet_id to params
         $params[] = $betId;
         
-        $sql = "UPDATE Bets SET " . implode(', ', $updateFields) . " WHERE bet_id = ?";
+        $sql = "UPDATE bets SET " . implode(', ', $updateFields) . " WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
         try {
@@ -232,8 +232,8 @@ class Bet {
     public function checkAllParticipantsPaid($betId) {
         $sql = "SELECT COUNT(*) as total_participants,
                 SUM(CASE WHEN pi.status = 'completed' THEN 1 ELSE 0 END) as paid_participants
-                FROM BetParticipants bp
-                LEFT JOIN PaymentIntents pi ON bp.bet_id = pi.bet_id AND bp.user_id = pi.user_id
+                FROM betparticipants bp
+                LEFT JOIN paymentintents pi ON bp.bet_id = pi.bet_id AND bp.user_id = pi.user_id
                 WHERE bp.bet_id = ? AND bp.status = 'accepted'";
         
         $stmt = $this->db->prepare($sql);
@@ -249,7 +249,7 @@ class Bet {
     public function checkAllParticipantsResponded($betId) {
         $sql = "SELECT COUNT(*) as total_invites,
                 SUM(CASE WHEN status IN ('accepted', 'rejected') THEN 1 ELSE 0 END) as responded
-                FROM BetParticipants
+                FROM betparticipants
                 WHERE bet_id = ?";
         
         $stmt = $this->db->prepare($sql);
@@ -267,7 +267,7 @@ class Bet {
             $this->db->beginTransaction();
 
             // Get bet details
-            $sql = "SELECT stake_type FROM Bets WHERE bet_id = ?";
+            $sql = "SELECT stake_type FROM bets WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$betId]);
             $bet = $stmt->fetch();
@@ -309,7 +309,7 @@ class Bet {
 
             // Get total pot amount
             $sql = "SELECT SUM(amount) as total_pot 
-                    FROM PaymentIntents 
+                    FROM paymentintents 
                     WHERE bet_id = ? AND status = 'completed'";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$betId]);

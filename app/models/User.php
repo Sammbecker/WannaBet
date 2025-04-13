@@ -14,7 +14,7 @@ class User {
     public function register($username, $email, $password) {
         // Check if username or email already exists
         if ($this->userExists($username, $email)) {
-            return false;
+            return ['success' => false, 'message' => 'Username or email already exists'];
         }
         
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
@@ -24,10 +24,18 @@ class User {
         
         try {
             $stmt->execute([$username, $email, $hashedPassword]);
-            return $this->db->lastInsertId();
+            $userId = $this->db->lastInsertId();
+            return [
+                'success' => true,
+                'user' => [
+                    'id' => $userId,
+                    'username' => $username,
+                    'email' => $email
+                ]
+            ];
         } catch (PDOException $e) {
             error_log("Registration error: " . $e->getMessage());
-            return false;
+            return ['success' => false, 'message' => 'Registration failed. Please try again.'];
         }
     }
 
@@ -46,23 +54,30 @@ class User {
      * Login a user using email
      */
     public function login($email, $password) {
-        $sql = "SELECT * FROM users WHERE email = ?";
+        $sql = "SELECT id, username, email, password FROM users WHERE email = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$email]);
         $user = $stmt->fetch();
         
         if ($user && password_verify($password, $user['password'])) {
-            return $user;
+            return [
+                'success' => true,
+                'user' => [
+                    'id' => $user['id'],
+                    'username' => $user['username'],
+                    'email' => $user['email']
+                ]
+            ];
         }
         
-        return false;
+        return ['success' => false, 'message' => 'Invalid email or password'];
     }
 
     /**
      * Get user by ID
      */
     public function getUserById($userId) {
-        $sql = "SELECT user_id, username, email, created_at FROM users WHERE user_id = ?";
+        $sql = "SELECT id, username, email, created_at FROM users WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
         
@@ -73,7 +88,7 @@ class User {
      * Get all users
      */
     public function getAllUsers() {
-        $sql = "SELECT user_id, username, email, created_at FROM users";
+        $sql = "SELECT id, username, email, created_at FROM users";
         $stmt = $this->db->query($sql);
         
         return $stmt->fetchAll();
@@ -87,7 +102,7 @@ class User {
         $params = [];
         
         foreach ($data as $key => $value) {
-            if ($key !== 'user_id' && $key !== 'password') {
+            if ($key !== 'id' && $key !== 'password') {
                 $updateFields[] = "$key = ?";
                 $params[] = $value;
             }
@@ -98,7 +113,7 @@ class User {
         }
         
         $params[] = $userId;
-        $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE user_id = ?";
+        $sql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = ?";
         
         $stmt = $this->db->prepare($sql);
         
@@ -116,7 +131,7 @@ class User {
     public function updatePassword($userId, $newPassword) {
         $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
         
-        $sql = "UPDATE users SET password = ? WHERE user_id = ?";
+        $sql = "UPDATE users SET password = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
         
         try {

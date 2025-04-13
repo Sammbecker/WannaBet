@@ -12,119 +12,73 @@ class UserController {
      * Register a new user
      */
     public function register() {
-        // Process registration form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $username = trim($_POST['username'] ?? '');
-            $email = trim($_POST['email'] ?? '');
+            $username = $_POST['username'] ?? '';
+            $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
             $confirmPassword = $_POST['confirm_password'] ?? '';
-            
-            $errors = [];
-            
+
             // Validate input
-            if (empty($username)) {
-                $errors[] = "Username is required";
+            if (empty($username) || empty($email) || empty($password) || empty($confirmPassword)) {
+                return ['success' => false, 'message' => 'All fields are required'];
             }
-            
-            if (empty($email)) {
-                $errors[] = "Email is required";
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = "Invalid email format";
-            }
-            
-            if (empty($password)) {
-                $errors[] = "Password is required";
-            } elseif (strlen($password) < 6) {
-                $errors[] = "Password must be at least 6 characters long";
-            }
-            
+
             if ($password !== $confirmPassword) {
-                $errors[] = "Passwords do not match";
+                return ['success' => false, 'message' => 'Passwords do not match'];
             }
+
+            // Register user
+            $result = $this->userModel->register($username, $email, $password);
             
-            // If no errors, try to register the user
-            if (empty($errors)) {
-                $userId = $this->userModel->register($username, $email, $password);
-                
-                if ($userId) {
-                    // Set session data
-                    $_SESSION['user_id'] = $userId;
-                    $_SESSION['username'] = $username;
-                    
-                    // Redirect to home page
-                    header('Location: home.php');
-                    exit();
-                } else {
-                    $errors[] = "Username or email already exists";
-                }
+            if ($result['success']) {
+                // Set success message in session
+                $_SESSION['registration_success'] = 'Registration successful! Please log in.';
+                return ['success' => true];
+            } else {
+                return ['success' => false, 'message' => $result['message']];
             }
-            
-            // If errors, return them
-            return ['success' => false, 'errors' => $errors];
         }
-        
-        // Default: return the registration form
-        return ['success' => false, 'errors' => []];
+        return ['success' => false, 'message' => 'Invalid request method'];
     }
     
     /**
      * Login a user
      */
     public function login() {
-        // Process login form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = trim($_POST['email'] ?? '');
+            $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
-            
-            $errors = [];
-            
+
             // Validate input
-            if (empty($email)) {
-                $errors[] = "Email is required";
+            if (empty($email) || empty($password)) {
+                return ['success' => false, 'message' => 'Email and password are required'];
             }
+
+            // Attempt login
+            $result = $this->userModel->login($email, $password);
             
-            if (empty($password)) {
-                $errors[] = "Password is required";
-            }
-            
-            // If no errors, try to login
-            if (empty($errors)) {
-                $user = $this->userModel->login($email, $password);
-                
-                if ($user) {
-                    // Set session data
-                    $_SESSION['user_id'] = $user['user_id'];
-                    $_SESSION['username'] = $user['username'];
-                    
-                    // Redirect to home page
-                    header('Location: home.php');
-                    exit();
+            if (isset($result['success']) && $result['success'] === true) {
+                if (isset($result['user']) && isset($result['user']['id']) && isset($result['user']['username'])) {
+                    $_SESSION['user_id'] = $result['user']['id'];
+                    $_SESSION['username'] = $result['user']['username'];
+                    return ['success' => true];
                 } else {
-                    $errors[] = "Invalid email or password";
+                    return ['success' => false, 'message' => 'Invalid user data received'];
                 }
+            } else {
+                return ['success' => false, 'message' => $result['message'] ?? 'Invalid email or password'];
             }
-            
-            // If errors, return them
-            return ['success' => false, 'errors' => $errors];
         }
-        
-        // Default: return the login form
-        return ['success' => false, 'errors' => []];
+        return ['success' => false, 'message' => 'Invalid request method'];
     }
     
     /**
      * Logout a user
      */
     public function logout() {
-        // Unset all session variables
-        $_SESSION = [];
-        
-        // Destroy the session
         session_destroy();
-        
-        // Redirect to login page
-        header('Location: login.php');
-        exit();
+        header('Location: /WannaBet');
+        exit;
     }
     
     /**

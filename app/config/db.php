@@ -11,7 +11,7 @@ class Database {
     private function __construct() {
         $dsn = "mysql:host=localhost;dbname=betting_app";
         $username = "root"; 
-        $password = "1909"; 
+        $password = ""; // Default XAMPP MySQL password is empty
         
         try {
             $this->pdo = new PDO($dsn, $username, $password);

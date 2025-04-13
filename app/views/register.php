@@ -1,10 +1,9 @@
 <?php
-session_start();
 require_once __DIR__ . '/../controllers/UserController.php';
 
 // Redirect if already logged in
 if (isset($_SESSION['user_id'])) {
-    header('Location: home.php');
+    header('Location: /home');
     exit();
 }
 
@@ -26,84 +25,150 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WannaBet - Register</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Register - WannaBet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: #000000;
-            --secondary-color: #333333;
-            --background-color: #f9f9f9;
-            --card-bg: #ffffff;
-            --text-color: #111111;
-            --text-light: #555555;
-            --border-color: #eeeeee;
-            --accent-color: #000000;
-            --hover-accent: #333333;
-            --error-color: #ef4444;
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #10b981;
+            --accent-color: #f59e0b;
+            --text-color: #f3f4f6;
+            --text-light: #9ca3af;
+            --background-color: #111827;
+            --card-background: #1f2937;
+            --border-color: #374151;
+            --danger-color: #ef4444;
             --success-color: #10b981;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
-            --gradient-black: linear-gradient(145deg, #000000, #222222);
-        }
-
-        [data-theme="dark"] {
-            --primary-color: #ffffff;
-            --secondary-color: #cccccc;
-            --background-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f5f5f5;
-            --text-light: #aaaaaa;
-            --border-color: #333333;
-            --accent-color: #ffffff;
-            --hover-accent: #cccccc;
-            --error-color: #f87171;
-            --success-color: #34d399;
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
+            --gradient-accent: linear-gradient(135deg, #f59e0b, #d97706);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
 
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text-color);
+            background-color: var(--background-color);
             line-height: 1.6;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo i {
+            color: var(--primary-color);
+        }
+
+        .register-container {
+            flex: 1;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 4rem 0;
+            position: relative;
+            overflow: hidden;
         }
 
-        .auth-container {
-            background: var(--card-bg);
-            padding: 3rem;
-            border-radius: 1.5rem;
-            width: 100%;
-            max-width: 480px;
-            box-shadow: var(--shadow-md);
+        .register-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .register-card {
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
             border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow-xl);
+            animation: fadeInUp 1s ease-out;
         }
 
-        .auth-header {
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .register-header {
             text-align: center;
             margin-bottom: 2.5rem;
         }
 
-        .auth-header h1 {
+        .register-header h1 {
             font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 0.5rem;
-            background: var(--gradient-black);
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        .auth-header p {
+        .register-header p {
             color: var(--text-light);
             font-size: 1.1rem;
         }
@@ -112,288 +177,214 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 1.5rem;
         }
 
-        label {
+        .form-group label {
             display: block;
             margin-bottom: 0.5rem;
-            font-weight: 500;
             color: var(--text-color);
-            font-size: 0.95rem;
+            font-weight: 500;
         }
 
-        input {
+        .form-control {
             width: 100%;
-            padding: 1rem 1.25rem;
-            border: 2px solid var(--border-color);
-            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: rgba(31, 41, 55, 0.3);
+            color: var(--text-color);
             font-size: 1rem;
             transition: all 0.3s;
-            background: var(--card-bg);
-            color: var(--text-color);
         }
 
-        input:focus {
+        .form-control:focus {
             outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: var(--text-light);
         }
 
         .btn {
-            background: var(--gradient-black);
-            color: white;
-            padding: 1.25rem;
-            border: none;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.3s;
-            margin-top: 1rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
-        }
-
-        .btn:hover:before {
-            left: 100%;
-        }
-
-        .auth-footer {
-            text-align: center;
-            margin-top: 2rem;
-            color: var(--text-light);
-            font-size: 0.95rem;
-        }
-
-        .auth-footer a {
-            color: var(--accent-color);
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.3s;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
         }
 
-        .auth-footer a:hover {
-            color: var(--hover-accent);
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
 
         .error-message {
+            color: var(--danger-color);
             background: rgba(239, 68, 68, 0.1);
-            color: var(--error-color);
             padding: 1rem;
             border-radius: 0.5rem;
             margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            display: none;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
         }
 
-        .password-requirements {
-            margin-top: 0.5rem;
-            font-size: 0.85rem;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .register-footer {
+            text-align: center;
+            margin-top: 2rem;
             color: var(--text-light);
         }
 
-        .requirement {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.25rem;
-        }
-
-        .requirement i {
-            font-size: 0.75rem;
-        }
-
-        .requirement.valid {
-            color: var(--success-color);
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            background: none;
-            border: none;
-            color: var(--text-color);
-            cursor: pointer;
-            font-size: 1.2rem;
-            padding: 0.5rem;
-            border-radius: 50%;
+        .register-footer a {
+            color: var(--primary-color);
+            text-decoration: none;
             transition: all 0.3s;
         }
 
-        .theme-toggle:hover {
-            background: var(--border-color);
-            transform: rotate(30deg);
+        .register-footer a:hover {
+            color: var(--text-color);
+            text-decoration: underline;
         }
 
-        @media (max-width: 640px) {
-            .auth-container {
+        .theme-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        @media (max-width: 768px) {
+            .register-card {
                 padding: 2rem;
+                margin: 1rem;
             }
 
-            .auth-header h1 {
+            .register-header h1 {
                 font-size: 2rem;
             }
 
-            body {
-                padding: 1rem;
+            .theme-toggle {
+                bottom: 1rem;
+                right: 1rem;
             }
         }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="toggleTheme()">
-        <i class="fas fa-moon"></i>
-    </button>
-
-    <div class="auth-container">
-        <div class="auth-header">
-            <h1>WannaBet</h1>
-            <p>Create your account</p>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="/WannaBet" class="logo">
+                    <i class="fas fa-handshake"></i>
+                    WannaBet
+                </a>
+            </nav>
         </div>
+    </header>
 
-        <?php if (isset($errors)): ?>
-            <div class="error-message">
-                <?php 
-                    foreach ($errors as $error) {
-                        echo htmlspecialchars($error) . '<br>';
-                    }
-                ?>
-            </div>
-        <?php endif; ?>
-
-        <form id="registerForm" method="POST" action="">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required placeholder="Choose a username">
+    <div class="register-container">
+        <div class="register-card">
+            <div class="register-header">
+                <h1>Create Account</h1>
+                <p>Join WannaBet and start betting with friends</p>
             </div>
 
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="Enter your email">
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Create a password">
-                <div class="password-requirements">
-                    <div class="requirement" id="lengthReq">
-                        <i class="fas fa-circle"></i>
-                        At least 8 characters
-                    </div>
-                    <div class="requirement" id="upperReq">
-                        <i class="fas fa-circle"></i>
-                        One uppercase letter
-                    </div>
-                    <div class="requirement" id="numberReq">
-                        <i class="fas fa-circle"></i>
-                        One number
-                    </div>
+            <?php if (isset($errors)): ?>
+                <div class="error-message">
+                    <?php 
+                        foreach ($errors as $error) {
+                            echo htmlspecialchars($error) . '<br>';
+                        }
+                    ?>
                 </div>
+            <?php endif; ?>
+
+            <form action="/WannaBet/register" method="POST">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+
+            <div class="register-footer">
+                <p>Already have an account? <a href="/WannaBet/login">Sign in</a></p>
             </div>
-
-            <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" required placeholder="Confirm your password">
-            </div>
-
-            <button type="submit" class="btn">Create Account</button>
-        </form>
-
-        <div class="auth-footer">
-            <p>Already have an account? <a href="login.php">Sign in</a></p>
         </div>
     </div>
 
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <script>
-        function toggleTheme() {
-            const body = document.body;
-            const isDark = body.getAttribute('data-theme') === 'dark';
-            body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-            
-            const themeIcon = document.querySelector('.theme-toggle i');
-            themeIcon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
-            
-            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            icon.classList.replace('fa-moon', 'fa-sun');
         }
 
-        // Password validation
-        const password = document.getElementById('password');
-        const lengthReq = document.getElementById('lengthReq');
-        const upperReq = document.getElementById('upperReq');
-        const numberReq = document.getElementById('numberReq');
-
-        password.addEventListener('input', function() {
-            const val = this.value;
-            
-            // Length requirement
-            if (val.length >= 8) {
-                lengthReq.classList.add('valid');
-                lengthReq.querySelector('i').className = 'fas fa-check-circle';
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+                icon.classList.replace('fa-sun', 'fa-moon');
             } else {
-                lengthReq.classList.remove('valid');
-                lengthReq.querySelector('i').className = 'fas fa-circle';
-            }
-            
-            // Uppercase requirement
-            if (/[A-Z]/.test(val)) {
-                upperReq.classList.add('valid');
-                upperReq.querySelector('i').className = 'fas fa-check-circle';
-            } else {
-                upperReq.classList.remove('valid');
-                upperReq.querySelector('i').className = 'fas fa-circle';
-            }
-            
-            // Number requirement
-            if (/[0-9]/.test(val)) {
-                numberReq.classList.add('valid');
-                numberReq.querySelector('i').className = 'fas fa-check-circle';
-            } else {
-                numberReq.classList.remove('valid');
-                numberReq.querySelector('i').className = 'fas fa-circle';
-            }
-        });
-
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            
-            // Validate password requirements
-            if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
-                e.preventDefault();
-                alert('Please meet all password requirements');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                e.preventDefault();
-                alert('Passwords do not match');
-                return;
-            }
-        });
-
-        // Load saved theme
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.body.setAttribute('data-theme', savedTheme);
-            const themeIcon = document.querySelector('.theme-toggle i');
-            if (themeIcon) {
-                themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                icon.classList.replace('fa-moon', 'fa-sun');
             }
         });
     </script>

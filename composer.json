@@ -4,6 +4,7 @@
     "require": {
         "stripe/stripe-php": "^10.0",
         "yabacon/paystack-php": "^2.2",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "php": "^7.4"
     }
 }

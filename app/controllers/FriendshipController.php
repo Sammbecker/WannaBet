@@ -74,11 +74,11 @@ class FriendshipController {
         
         // Get current friends
         $friends = $this->friendshipModel->getFriends($userId);
-        $friendIds = array_column($friends, 'user_id');
+        $friendIds = array_column($friends, 'id');
         
         // Filter out current user and friends
         $potentialFriends = array_filter($allUsers, function($user) use ($userId, $friendIds) {
-            return $user['user_id'] != $userId && !in_array($user['user_id'], $friendIds);
+            return $user['id'] != $userId && !in_array($user['id'], $friendIds);
         });
         
         return ['success' => true, 'users' => array_values($potentialFriends)];

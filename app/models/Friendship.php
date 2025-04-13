@@ -66,10 +66,10 @@ class Friendship {
      * Get all friends of a user
      */
     public function getFriends($userId) {
-        $sql = "SELECT u.* FROM Users u
-                JOIN Friendships f ON (u.user_id = f.friend_id OR u.user_id = f.user_id)
+        $sql = "SELECT u.* FROM users u
+                JOIN friendships f ON (u.id = f.friend_id OR u.id = f.user_id)
                 WHERE ((f.user_id = ? OR f.friend_id = ?) 
-                AND u.user_id != ? 
+                AND u.id != ? 
                 AND f.status = 'accepted')";
                 
         $stmt = $this->db->prepare($sql);
@@ -82,9 +82,9 @@ class Friendship {
      * Get pending friend requests sent to user
      */
     public function getPendingRequestsReceived($userId) {
-        $sql = "SELECT u.*, f.friendship_id, f.created_at as request_date 
-                FROM Users u
-                JOIN Friendships f ON u.user_id = f.user_id
+        $sql = "SELECT u.*, f.id as friendship_id, f.created_at as request_date 
+                FROM users u
+                JOIN friendships f ON u.id = f.user_id
                 WHERE f.friend_id = ? AND f.status = 'pending'";
                 
         $stmt = $this->db->prepare($sql);
@@ -97,9 +97,9 @@ class Friendship {
      * Get pending friend requests sent by user
      */
     public function getPendingRequestsSent($userId) {
-        $sql = "SELECT u.*, f.friendship_id, f.created_at as request_date 
-                FROM Users u
-                JOIN Friendships f ON u.user_id = f.friend_id
+        $sql = "SELECT u.*, f.id as friendship_id, f.created_at as request_date 
+                FROM users u
+                JOIN friendships f ON u.id = f.friend_id
                 WHERE f.user_id = ? AND f.status = 'pending'";
                 
         $stmt = $this->db->prepare($sql);

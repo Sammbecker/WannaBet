@@ -1,11 +1,13 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../controllers/FriendshipController.php';
 require_once __DIR__ . '/../utils/functions.php';
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: /WannaBet/login');
     exit();
 }
 
@@ -87,7 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --info-color: #3b82f6;
         }
 
-        /* Dark mode colors */
         [data-theme="dark"] {
             --primary-color: #ffffff;
             --secondary-color: #cccccc;
@@ -331,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <header>
             <h1>Friends</h1>
-            <a href="home.php" class="btn btn-outline">Back to Home</a>
+            <a href="/WannaBet/home" class="btn btn-outline">Back to Home</a>
         </header>
 
         <?php if ($successMessage): ?>
@@ -374,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </div>
                                 <div class="card-actions">
                                     <form method="POST">
-                                        <input type="hidden" name="friend_id" value="<?php echo $user['user_id']; ?>">
+                                        <input type="hidden" name="friend_id" value="<?php echo $user['id']; ?>">
                                         <button type="submit" name="send_request" class="btn">Add Friend</button>
                                     </form>
                                 </div>
@@ -400,9 +401,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <p class="card-text"><?php echo htmlspecialchars($friend['email']); ?></p>
                                 </div>
                                 <div class="card-actions">
-                                    <a href="create_bet.php?friend_id=<?php echo $friend['user_id']; ?>" class="btn btn-success">Create Bet</a>
+                                    <a href="/WannaBet/create_bet?friend_id=<?php echo $friend['id']; ?>" class="btn btn-success">Create Bet</a>
                                     <form method="POST" style="display: inline;">
-                                        <input type="hidden" name="friend_id" value="<?php echo $friend['user_id']; ?>">
+                                        <input type="hidden" name="friend_id" value="<?php echo $friend['id']; ?>">
                                         <button type="submit" name="remove_friend" class="btn btn-danger">Remove</button>
                                     </form>
                                 </div>
@@ -465,7 +466,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     </div>
                                     <div class="card-actions">
                                         <form method="POST">
-                                            <input type="hidden" name="friend_id" value="<?php echo $request['user_id']; ?>">
+                                            <input type="hidden" name="friend_id" value="<?php echo $request['id']; ?>">
                                             <button type="submit" name="remove_friend" class="btn btn-danger">Cancel Request</button>
                                         </form>
                                     </div>

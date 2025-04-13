@@ -3,7 +3,7 @@
         'name' => 'wannabet/app',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '092c7aa32ecefaf39308307b10f9c440626feaaa',
+        'reference' => '02607f5eabad6590ba299c18eb2f8460ccb98e65',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -112,7 +112,7 @@
         'wannabet/app' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '092c7aa32ecefaf39308307b10f9c440626feaaa',
+            'reference' => '02607f5eabad6590ba299c18eb2f8460ccb98e65',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

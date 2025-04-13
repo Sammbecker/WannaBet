@@ -1,8 +1,7 @@
 <?php
-session_start();
 // Redirect to home if already logged in
 if (isset($_SESSION['user_id'])) {
-    header("Location: home.php");
+    header("Location: /WannaBet/home");
     exit;
 }
 ?>
@@ -19,13 +18,17 @@ if (isset($_SESSION['user_id'])) {
             --primary-dark: #2563eb;
             --secondary-color: #10b981;
             --accent-color: #f59e0b;
-            --text-color: #374151;
-            --text-light: #6b7280;
-            --background-color: #f9fafb;
-            --card-background: #ffffff;
-            --border-color: #e5e7eb;
+            --text-color: #f3f4f6;
+            --text-light: #9ca3af;
+            --background-color: #111827;
+            --card-background: #1f2937;
+            --border-color: #374151;
             --danger-color: #ef4444;
             --success-color: #10b981;
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
+            --gradient-accent: linear-gradient(135deg, #f59e0b, #d97706);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
 
         * {
@@ -42,12 +45,14 @@ if (isset($_SESSION['user_id'])) {
         }
 
         header {
-            background-color: var(--card-background);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
             padding: 1rem 0;
             position: sticky;
             top: 0;
             z-index: 100;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .container {
@@ -66,15 +71,20 @@ if (isset($_SESSION['user_id'])) {
         .logo {
             font-size: 1.5rem;
             font-weight: bold;
-            color: var(--primary-color);
+            color: var(--text-color);
             text-decoration: none;
             display: flex;
             align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
         }
 
         .logo i {
-            margin-right: 0.5rem;
-            font-size: 1.8rem;
+            color: var(--primary-color);
         }
 
         .nav-links {
@@ -84,49 +94,65 @@ if (isset($_SESSION['user_id'])) {
 
         .nav-links a {
             text-decoration: none;
-            color: var(--text-color);
+            color: var(--text-light);
             font-weight: 500;
-            transition: color 0.3s;
+            transition: all 0.3s;
+            position: relative;
         }
 
         .nav-links a:hover {
-            color: var(--primary-color);
+            color: var(--text-color);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
         }
 
         .btn {
             display: inline-block;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 0.375rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
             text-decoration: none;
-            font-weight: 500;
-            transition: background-color 0.3s, transform 0.2s;
+            font-weight: 600;
+            transition: all 0.3s;
             border: none;
             cursor: pointer;
         }
 
-        .btn:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--primary-color);
+        .btn-primary {
+            background: var(--gradient-primary);
             color: white;
         }
 
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
         .hero {
-            padding: 5rem 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            padding: 8rem 0;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -135,142 +161,149 @@ if (isset($_SESSION['user_id'])) {
         .hero::before {
             content: '';
             position: absolute;
-            top: -100px;
-            right: -100px;
-            width: 400px;
-            height: 400px;
-            background: var(--primary-color);
-            opacity: 0.05;
-            border-radius: 50%;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
             z-index: -1;
+            animation: rotate 20s linear infinite;
         }
 
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -100px;
-            left: -100px;
-            width: 300px;
-            height: 300px;
-            background: var(--secondary-color);
-            opacity: 0.05;
-            border-radius: 50%;
-            z-index: -1;
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .hero h1 {
-            font-size: 3rem;
+            font-size: 4rem;
             margin-bottom: 1.5rem;
-            color: var(--primary-color);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fadeInUp 1s ease-out;
         }
 
         .hero p {
             font-size: 1.25rem;
             color: var(--text-light);
             max-width: 700px;
-            margin-bottom: 2rem;
+            margin: 0 auto 2.5rem;
+            animation: fadeInUp 1s ease-out 0.2s backwards;
         }
 
         .hero-buttons {
             display: flex;
             gap: 1rem;
+            justify-content: center;
+            animation: fadeInUp 1s ease-out 0.4s backwards;
         }
 
         .features {
-            padding: 5rem 0;
-            background-color: white;
+            padding: 6rem 0;
+            background-color: var(--card-background);
         }
 
         .section-title {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 4rem;
         }
 
         .section-title h2 {
-            font-size: 2.25rem;
-            color: var(--text-color);
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .section-title p {
             color: var(--text-light);
-            margin-top: 0.5rem;
+            font-size: 1.1rem;
         }
 
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 2rem;
-            margin-top: 3rem;
         }
 
         .feature-card {
-            background-color: var(--card-background);
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
             padding: 2rem;
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: all 0.3s;
         }
 
         .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-color);
         }
 
         .feature-icon {
             width: 60px;
             height: 60px;
-            background-color: rgba(59, 130, 246, 0.1);
-            border-radius: 50%;
+            background: var(--gradient-primary);
+            border-radius: 1rem;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 1.5rem;
-        }
-
-        .feature-icon i {
-            font-size: 1.75rem;
-            color: var(--primary-color);
+            color: white;
+            font-size: 1.5rem;
         }
 
         .feature-card h3 {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             margin-bottom: 1rem;
+            color: var(--text-color);
         }
 
         .feature-card p {
             color: var(--text-light);
+            line-height: 1.8;
         }
 
         .how-it-works {
-            padding: 5rem 0;
+            padding: 6rem 0;
             background-color: var(--background-color);
         }
 
         .steps {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 2rem;
             margin-top: 3rem;
         }
 
         .step {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             text-align: center;
-            max-width: 250px;
+            padding: 2rem;
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            transition: all 0.3s;
+        }
+
+        .step:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
         }
 
         .step-number {
             width: 50px;
             height: 50px;
-            background-color: var(--primary-color);
+            background: var(--gradient-primary);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1.5rem;
+            margin: 0 auto 1.5rem;
             color: white;
             font-weight: bold;
             font-size: 1.25rem;
@@ -278,6 +311,7 @@ if (isset($_SESSION['user_id'])) {
 
         .step h3 {
             margin-bottom: 1rem;
+            color: var(--text-color);
         }
 
         .step p {
@@ -285,8 +319,8 @@ if (isset($_SESSION['user_id'])) {
         }
 
         .testimonials {
-            background-color: white;
-            padding: 5rem 0;
+            padding: 6rem 0;
+            background-color: var(--card-background);
         }
 
         .testimonials-slider {
@@ -294,27 +328,35 @@ if (isset($_SESSION['user_id'])) {
             display: flex;
             overflow-x: hidden;
             scroll-behavior: smooth;
+            gap: 2rem;
+            padding: 1rem;
         }
 
         .testimonial {
             min-width: 100%;
             padding: 2rem;
-            text-align: center;
         }
 
         .testimonial-content {
-            max-width: 700px;
-            margin: 0 auto;
-            background-color: var(--card-background);
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
             padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .testimonial-content:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
         }
 
         .testimonial p {
             font-size: 1.1rem;
             line-height: 1.8;
             margin-bottom: 1.5rem;
+            color: var(--text-color);
         }
 
         .testimonial-author {
@@ -335,53 +377,74 @@ if (isset($_SESSION['user_id'])) {
             border-radius: 50%;
             background-color: var(--border-color);
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: all 0.3s;
         }
 
         .testimonial-dot.active {
-            background-color: var(--primary-color);
+            background: var(--gradient-primary);
+            transform: scale(1.2);
         }
 
         footer {
-            background-color: var(--text-color);
-            color: white;
-            padding: 3rem 0;
+            background-color: var(--card-background);
+            padding: 4rem 0 2rem;
+            border-top: 1px solid var(--border-color);
         }
 
         .footer-content {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 3rem;
+            margin-bottom: 3rem;
         }
 
         .footer-logo {
             font-size: 1.5rem;
             font-weight: bold;
-            color: white;
+            color: var(--text-color);
             text-decoration: none;
             display: flex;
             align-items: center;
+            gap: 0.5rem;
             margin-bottom: 1rem;
         }
 
         .footer-logo i {
-            margin-right: 0.5rem;
-        }
-
-        .footer-info {
-            max-width: 300px;
+            color: var(--primary-color);
         }
 
         .footer-info p {
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-links a {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            transition: all 0.3s;
+        }
+
+        .social-links a:hover {
+            background: var(--gradient-primary);
+            transform: translateY(-3px);
         }
 
         .footer-links h3 {
-            font-size: 1.1rem;
+            color: var(--text-color);
             margin-bottom: 1.5rem;
+            font-size: 1.1rem;
         }
 
         .footer-links ul {
@@ -389,46 +452,35 @@ if (isset($_SESSION['user_id'])) {
         }
 
         .footer-links a {
-            color: rgba(255, 255, 255, 0.7);
+            color: var(--text-light);
             text-decoration: none;
             display: block;
-            margin-bottom: 0.5rem;
-            transition: color 0.3s;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s;
         }
 
         .footer-links a:hover {
-            color: white;
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .social-links a {
-            color: white;
-            background-color: rgba(255, 255, 255, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s;
-        }
-
-        .social-links a:hover {
-            background-color: var(--primary-color);
+            color: var(--text-color);
+            transform: translateX(5px);
         }
 
         .copyright {
             text-align: center;
             padding-top: 2rem;
-            margin-top: 2rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid var(--border-color);
+            color: var(--text-light);
             font-size: 0.9rem;
-            color: rgba(255, 255, 255, 0.7);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         @media (max-width: 768px) {
@@ -440,17 +492,16 @@ if (isset($_SESSION['user_id'])) {
                 font-size: 1.1rem;
             }
 
-            .features-grid {
-                grid-template-columns: 1fr;
+            .nav-links {
+                display: none;
             }
 
-            .steps {
+            .hero-buttons {
                 flex-direction: column;
-                align-items: center;
             }
 
-            .footer-content {
-                flex-direction: column;
+            .btn {
+                width: 100%;
             }
         }
     </style>
@@ -459,15 +510,18 @@ if (isset($_SESSION['user_id'])) {
     <header>
         <div class="container">
             <nav>
-                <a href="#" class="logo"><i class="fas fa-handshake"></i> WannaBet</a>
+                <a href="#" class="logo">
+                    <i class="fas fa-handshake"></i>
+                    WannaBet
+                </a>
                 <div class="nav-links">
                     <a href="#features">Features</a>
                     <a href="#how-it-works">How it Works</a>
                     <a href="#testimonials">Testimonials</a>
                 </div>
                 <div>
-                    <a href="login.php" class="btn btn-outline">Log In</a>
-                    <a href="register.php" class="btn">Sign Up</a>
+                    <a href="/WannaBet/login" class="btn btn-outline">Log In</a>
+                    <a href="/WannaBet/register" class="btn btn-primary">Sign Up</a>
                 </div>
             </nav>
         </div>
@@ -478,7 +532,7 @@ if (isset($_SESSION['user_id'])) {
             <h1>Friendly Betting Made Simple</h1>
             <p>WannaBet makes it easy to create fun, friendly bets with your friends, track outcomes, and settle up afterward - all in one place.</p>
             <div class="hero-buttons">
-                <a href="register.php" class="btn">Get Started</a>
+                <a href="/WannaBet/register" class="btn btn-primary">Get Started</a>
                 <a href="#how-it-works" class="btn btn-outline">Learn More</a>
             </div>
         </div>
@@ -606,7 +660,10 @@ if (isset($_SESSION['user_id'])) {
         <div class="container">
             <div class="footer-content">
                 <div class="footer-info">
-                    <a href="#" class="footer-logo"><i class="fas fa-handshake"></i> WannaBet</a>
+                    <a href="#" class="footer-logo">
+                        <i class="fas fa-handshake"></i>
+                        WannaBet
+                    </a>
                     <p>WannaBet is the ultimate platform for friendly wagers between friends. Track bets, settle up, and have fun!</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
@@ -620,7 +677,7 @@ if (isset($_SESSION['user_id'])) {
                         <li><a href="#features">Features</a></li>
                         <li><a href="#how-it-works">How It Works</a></li>
                         <li><a href="#testimonials">Testimonials</a></li>
-                        <li><a href="register.php">Sign Up</a></li>
+                        <li><a href="/WannaBet/register">Sign Up</a></li>
                     </ul>
                 </div>
                 <div class="footer-links">
@@ -672,6 +729,20 @@ if (isset($_SESSION['user_id'])) {
             dots.forEach(d => d.classList.remove('active'));
             dots[currentSlide].classList.add('active');
         }, 5000);
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html> 

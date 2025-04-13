@@ -15,7 +15,7 @@ class Notification {
         try {
             // Determine which fields to include based on notification type
             if ($data['type'] === 'friend_request' || $data['type'] === 'friend_response') {
-                $sql = "INSERT INTO Notifications (friendship_id, user_id, type, message) 
+                $sql = "INSERT INTO notifications (friendship_id, user_id, type, message) 
                         VALUES (?, ?, ?, ?)";
                 $params = [
                     $data['friendship_id'],
@@ -24,7 +24,7 @@ class Notification {
                     $data['message']
                 ];
             } else {
-                $sql = "INSERT INTO Notifications (bet_id, user_id, type, message) 
+                $sql = "INSERT INTO notifications (bet_id, user_id, type, message) 
                         VALUES (?, ?, ?, ?)";
                 $params = [
                     $data['bet_id'],
@@ -48,31 +48,15 @@ class Notification {
      */
     public function getNotificationsForUser($userId) {
         $sql = "SELECT n.*, 
-                    CASE 
-                        WHEN n.type = 'bet_invitation' THEN b.description
-                        ELSE n.message
-                    END as notification_text,
-                    b.stake_type,
-                    CASE 
-                        WHEN b.stake_type = 'money' THEN CONCAT('$', b.stake_amount)
-                        WHEN b.stake_type = 'favor' THEN b.stake_description
-                        ELSE NULL
-                    END as stake_display,
-                    u.username as sender_username,
-                    b.deadline,
-                    b.description,
-                    b.stake_amount,
-                    b.stake_description
-                FROM Notifications n
-                LEFT JOIN Bets b ON n.bet_id = b.bet_id
-                LEFT JOIN Users u ON b.user_id = u.user_id
-                WHERE n.user_id = ? AND n.is_read = 0
-                AND n.type = 'bet_invitation'
+                b.title as bet_title,
+                u.username as sender_username
+                FROM notifications n
+                LEFT JOIN bets b ON n.bet_id = b.id
+                LEFT JOIN users u ON n.user_id = u.id
+                WHERE n.user_id = ?
                 ORDER BY n.created_at DESC";
-        
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
-        
         return $stmt->fetchAll();
     }
 
@@ -81,81 +65,59 @@ class Notification {
      */
     public function getPendingNotificationsForUser($userId) {
         $sql = "SELECT n.*, 
-                    CASE 
-                        WHEN n.type = 'bet_invitation' THEN b.description
-                        ELSE n.message
-                    END as notification_text,
-                    b.stake_type,
-                    CASE 
-                        WHEN b.stake_type = 'money' THEN CONCAT('$', b.stake_amount)
-                        WHEN b.stake_type = 'favor' THEN b.stake_description
-                        ELSE NULL
-                    END as stake_display,
-                    creator.username as creator_username,
-                    b.deadline,
-                    b.description,
-                    b.stake_amount,
-                    b.stake_description
-                FROM Notifications n
-                LEFT JOIN Bets b ON n.bet_id = b.bet_id
-                LEFT JOIN Users creator ON b.user_id = creator.user_id
-                WHERE n.user_id = ? AND n.status = 'pending'
-                AND n.type = 'bet_invitation'
+                b.title as bet_title,
+                u.username as sender_username
+                FROM notifications n
+                LEFT JOIN bets b ON n.bet_id = b.id
+                LEFT JOIN users u ON n.user_id = u.id
+                WHERE n.user_id = ? AND n.is_read = FALSE
                 ORDER BY n.created_at DESC";
-        
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
-        
         return $stmt->fetchAll();
     }
 
     /**
-     * Get a notification by ID
+     * Get notification by ID
      */
     public function getNotificationById($notificationId) {
-        $sql = "SELECT * FROM Notifications WHERE notification_id = ?";
+        $sql = "SELECT n.*, 
+                b.title as bet_title,
+                u.username as sender_username
+                FROM notifications n
+                LEFT JOIN bets b ON n.bet_id = b.id
+                LEFT JOIN users u ON n.user_id = u.id
+                WHERE n.id = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$notificationId]);
-        
         return $stmt->fetch();
     }
 
     /**
-     * Mark a notification as read
+     * Mark notification as read
      */
     public function markAsRead($notificationId) {
-        $sql = "UPDATE Notifications SET is_read = 1 WHERE notification_id = ?";
+        $sql = "UPDATE notifications SET is_read = TRUE WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        
-        try {
-            return $stmt->execute([$notificationId]);
-        } catch (PDOException $e) {
-            return false;
-        }
+        return $stmt->execute([$notificationId]);
     }
 
     /**
      * Update notification status
      */
     public function updateStatus($notificationId, $status) {
-        $sql = "UPDATE Notifications SET status = ? WHERE notification_id = ?";
+        $sql = "UPDATE notifications SET status = ? WHERE id = ?";
         $stmt = $this->db->prepare($sql);
-        
-        try {
-            return $stmt->execute([$status, $notificationId]);
-        } catch (PDOException $e) {
-            return false;
-        }
+        return $stmt->execute([$status, $notificationId]);
     }
 
     /**
-     * Get unread notification count for a user
+     * Get count of unread notifications
      */
     public function getUnreadCount($userId) {
-        $sql = "SELECT COUNT(*) as count FROM Notifications WHERE user_id = ? AND is_read = 0";
+        $sql = "SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = FALSE";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$userId]);
-        
         $result = $stmt->fetch();
         return $result['count'];
     }

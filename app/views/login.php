@@ -1,10 +1,13 @@
 <?php
-session_start();
 // Redirect to home if already logged in
 if (isset($_SESSION['user_id'])) {
-    header("Location: home.php");
+    header("Location: /WannaBet/home");
     exit;
 }
+
+// Check for registration success message
+$registration_success = $_SESSION['registration_success'] ?? null;
+unset($_SESSION['registration_success']); // Clear the message after displaying
 
 // Process login form
 $error = '';
@@ -15,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = $userController->login();
     
     if ($result['success']) {
-        header("Location: home.php");
+        header("Location: /WannaBet/home");
         exit;
     } else {
         $error = $result['message'];
@@ -27,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Log In - WannaBet</title>
+    <title>Login - WannaBet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -35,13 +38,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --primary-dark: #2563eb;
             --secondary-color: #10b981;
             --accent-color: #f59e0b;
-            --text-color: #374151;
-            --text-light: #6b7280;
-            --background-color: #f9fafb;
-            --card-background: #ffffff;
-            --border-color: #e5e7eb;
+            --text-color: #f3f4f6;
+            --text-light: #9ca3af;
+            --background-color: #111827;
+            --card-background: #1f2937;
+            --border-color: #374151;
             --danger-color: #ef4444;
             --success-color: #10b981;
+            --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
+            --gradient-accent: linear-gradient(135deg, #f59e0b, #d97706);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
         }
 
         * {
@@ -58,60 +65,117 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+
+        header {
+            background-color: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+        }
+
+        .logo i {
+            color: var(--primary-color);
         }
 
         .login-container {
             flex: 1;
             display: flex;
-            justify-content: center;
             align-items: center;
-            padding: 2rem;
+            justify-content: center;
+            padding: 4rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .login-card {
-            background-color: var(--card-background);
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            background: rgba(31, 41, 55, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            padding: 3rem;
             width: 100%;
-            max-width: 420px;
-            padding: 2.5rem;
-            transition: transform 0.3s;
+            max-width: 500px;
+            box-shadow: var(--shadow-xl);
+            animation: fadeInUp 1s ease-out;
         }
 
-        .login-card:hover {
-            transform: translateY(-5px);
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .login-header {
             text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .login-header .logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-color);
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 1.5rem;
-            text-decoration: none;
-        }
-
-        .login-header .logo i {
-            margin-right: 0.5rem;
-            font-size: 1.8rem;
+            margin-bottom: 2.5rem;
         }
 
         .login-header h1 {
-            font-size: 1.75rem;
-            color: var(--text-color);
-            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .login-header p {
             color: var(--text-light);
+            font-size: 1.1rem;
         }
 
         .form-group {
@@ -121,268 +185,215 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
+            color: var(--text-color);
             font-weight: 500;
         }
 
-        .form-group input {
+        .form-control {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
             border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
-            background-color: var(--background-color);
-            transition: border-color 0.3s, box-shadow 0.3s;
+            border-radius: 0.5rem;
+            background: rgba(31, 41, 55, 0.3);
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: all 0.3s;
         }
 
-        .form-group input:focus {
+        .form-control:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
         }
 
-        .form-group .input-with-icon {
-            position: relative;
-        }
-
-        .form-group .input-with-icon i {
-            position: absolute;
-            left: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
+        .form-control::placeholder {
             color: var(--text-light);
         }
 
-        .form-group .input-with-icon input {
-            padding-left: 2.5rem;
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
 
         .error-message {
             color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
             margin-bottom: 1.5rem;
-            font-size: 0.875rem;
-            padding: 0.5rem;
-            border-radius: 0.375rem;
-            background-color: rgba(239, 68, 68, 0.1);
-            display: flex;
-            align-items: center;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
         }
 
-        .error-message i {
-            margin-right: 0.5rem;
-        }
-
-        .remember-forgot {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .remember-me {
-            display: flex;
-            align-items: center;
-        }
-
-        .remember-me input[type="checkbox"] {
-            margin-right: 0.5rem;
-        }
-
-        .forgot-password {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 0.875rem;
-            transition: color 0.3s;
-        }
-
-        .forgot-password:hover {
-            color: var(--primary-dark);
-            text-decoration: underline;
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 0.75rem;
-            border: none;
-            border-radius: 0.375rem;
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s, transform 0.2s;
-        }
-
-        .btn:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .login-footer {
             text-align: center;
             margin-top: 2rem;
             color: var(--text-light);
-            font-size: 0.875rem;
         }
 
         .login-footer a {
             color: var(--primary-color);
             text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
+            transition: all 0.3s;
         }
 
         .login-footer a:hover {
-            color: var(--primary-dark);
+            color: var(--text-color);
             text-decoration: underline;
         }
 
-        .social-logins {
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-
-        .social-logins p {
-            margin-bottom: 1rem;
-            color: var(--text-light);
-            position: relative;
-        }
-
-        .social-logins p::before,
-        .social-logins p::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 40%;
-            height: 1px;
-            background-color: var(--border-color);
-        }
-
-        .social-logins p::before {
-            left: 0;
-        }
-
-        .social-logins p::after {
-            right: 0;
-        }
-
-        .social-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
-
-        .social-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
+        .theme-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .social-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        .return-home {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            color: var(--text-color);
-            text-decoration: none;
+            background: var(--gradient-primary);
             display: flex;
             align-items: center;
-            font-weight: 500;
-            transition: color 0.3s;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s;
+            z-index: 1000;
         }
 
-        .return-home i {
-            margin-right: 0.5rem;
+        .theme-toggle:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
         }
 
-        .return-home:hover {
-            color: var(--primary-color);
-        }
-
-        @media (max-width: 480px) {
+        @media (max-width: 768px) {
             .login-card {
-                padding: 1.5rem;
+                padding: 2rem;
+                margin: 1rem;
             }
+
+            .login-header h1 {
+                font-size: 2rem;
+            }
+
+            .theme-toggle {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+
+        .success-message {
+            color: var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
         }
     </style>
 </head>
 <body>
-    <a href="index.php" class="return-home">
-        <i class="fas fa-chevron-left"></i> Back to Home
-    </a>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="/WannaBet" class="logo">
+                    <i class="fas fa-handshake"></i>
+                    WannaBet
+                </a>
+            </nav>
+        </div>
+    </header>
 
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <a href="index.php" class="logo">
-                    <i class="fas fa-handshake"></i> WannaBet
-                </a>
-                <h1>Welcome Back!</h1>
-                <p>Log in to your WannaBet account</p>
+                <h1>Welcome Back</h1>
+                <p>Sign in to your WannaBet account</p>
             </div>
 
-            <?php if ($error): ?>
-                <div class="error-message">
-                    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
+            <?php if (isset($registration_success)): ?>
+                <div class="success-message">
+                    <?php echo htmlspecialchars($registration_success); ?>
                 </div>
             <?php endif; ?>
 
-            <form method="post" action="login.php">
+            <?php if (isset($error)): ?>
+                <div class="error-message">
+                    <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+
+            <form action="/WannaBet/login" method="POST">
                 <div class="form-group">
-                    <label for="email">Email or Username</label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-user"></i>
-                        <input type="text" id="email" name="email" placeholder="Enter your email or username" required>
-                    </div>
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" required>
                 </div>
 
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <div class="input-with-icon">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
-                    </div>
+                    <input type="password" id="password" name="password" class="form-control" required>
                 </div>
 
-                <div class="remember-forgot">
-                    <label class="remember-me">
-                        <input type="checkbox" name="remember" id="remember">
-                        Remember me
-                    </label>
-                    <a href="#" class="forgot-password">Forgot password?</a>
-                </div>
-
-                <button type="submit" class="btn">Log In</button>
+                <button type="submit" class="btn btn-primary">Sign In</button>
             </form>
 
-            <div class="social-logins">
-                <p>Or continue with</p>
-                <div class="social-buttons">
-                    <a href="#" class="social-btn">
-                        <i class="fab fa-google"></i>
-                    </a>
-                    <a href="#" class="social-btn">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#" class="social-btn">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                </div>
-            </div>
-
             <div class="login-footer">
-                Don't have an account? <a href="register.php">Sign up</a>
+                <p>Don't have an account? <a href="/WannaBet/register">Sign up</a></p>
             </div>
         </div>
     </div>
+
+    <button class="theme-toggle" id="themeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const icon = themeToggle.querySelector('i');
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+            icon.classList.replace('fa-moon', 'fa-sun');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+                icon.classList.replace('fa-sun', 'fa-moon');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+                icon.classList.replace('fa-moon', 'fa-sun');
+            }
+        });
+    </script>
 </body>
 </html>

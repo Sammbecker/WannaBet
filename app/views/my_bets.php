@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../controllers/BetController.php';
 require_once __DIR__ . '/../utils/functions.php';
 
@@ -13,7 +15,7 @@ $isAjaxRequest = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) &&
 
 // Redirect if not logged in (only for non-AJAX requests)
 if (!isset($_SESSION['user_id']) && !$isAjaxRequest) {
-    header('Location: login.php');
+    header('Location: /WannaBet/login');
     exit();
 } elseif (!isset($_SESSION['user_id']) && $isAjaxRequest) {
     header('Content-Type: application/json');
@@ -31,7 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // If this is an AJAX request, return JSON response and exit
         if ($isAjaxRequest) {
-            // Ensure proper content type header is set
             header('Content-Type: application/json');
             echo json_encode($result);
             exit;
@@ -174,6 +175,11 @@ if ($isAjaxRequest) {
             padding-bottom: 5px;
         }
 
+        h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
         .header-actions {
             display: flex;
             gap: 10px;
@@ -216,9 +222,6 @@ if ($isAjaxRequest) {
         .card-title {
             font-weight: 600;
             margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
         .card-text {
@@ -310,23 +313,49 @@ if ($isAjaxRequest) {
             color: white;
         }
 
-        .badge-success {
-            background: var(--success-color);
-            color: white;
-        }
-
         .badge-warning {
             background: var(--warning-color);
             color: white;
         }
 
-        .badge-info {
-            background: var(--info-color);
+        .badge-success {
+            background: var(--success-color);
             color: white;
         }
 
-        .section {
+        .badge-danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .nav-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-tab.active {
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .tab-content {
             margin-bottom: 30px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
         }
 
         .empty-state {
@@ -490,270 +519,215 @@ if ($isAjaxRequest) {
             </div>
         <?php endif; ?>
 
-        <!-- Pending Bet Invitations -->
-        <?php if (!empty($pendingNotifications)): ?>
-            <div class="section">
-                <h2>Pending Bet Invitations</h2>
-                <div class="card-grid">
-                    <?php foreach ($pendingNotifications as $notification): ?>
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="card-title">
-                                    <span>Bet from <?php echo htmlspecialchars($notification['creator_username']); ?></span>
-                                    <span class="badge badge-warning">Pending</span>
-                                </div>
-                                <p class="card-text"><?php echo htmlspecialchars($notification['description']); ?></p>
-                                
-                                <div class="card-details">
-                                    <div class="card-detail">
-                                        <span class="card-detail-label">Stake</span>
-                                        <span class="card-detail-value">
-                                            <?php if ($notification['type'] === 'bet_invitation'): ?>
-                                                <?php echo htmlspecialchars($notification['stake_display']); ?>
-                                            <?php else: ?>
-                                                <?php echo htmlspecialchars($notification['stake_description']); ?>
-                                            <?php endif; ?>
-                                        </span>
-                                    </div>
-                                    <div class="card-detail">
-                                        <span class="card-detail-label">Deadline</span>
-                                        <span class="card-detail-value"><?php echo date('M j, Y', strtotime($notification['deadline'])); ?></span>
-                                    </div>
-                                </div>
-
-                                <?php if ($notification['type'] === 'bet_invitation'): ?>
-                                    <div class="notification-details">
-                                        <p class="notification-text"><?php echo htmlspecialchars($notification['notification_text']); ?></p>
-                                        <p class="stake-info">
-                                            <strong>Stake:</strong> 
-                                            <?php echo htmlspecialchars($notification['stake_display']); ?>
-                                        </p>
-                                        <p class="deadline-info">
-                                            <strong>Deadline:</strong> 
-                                            <?php echo date('M j, Y', strtotime($notification['deadline'])); ?>
-                                        </p>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="card-actions">
-                                <form method="POST" class="bet-response-form">
-                                    <input type="hidden" name="notification_id" value="<?php echo $notification['notification_id']; ?>">
-                                    <input type="hidden" name="response" value="accepted">
-                                    <button type="submit" name="respond_bet" class="btn btn-success">Accept</button>
-                                </form>
-                                <form method="POST" class="bet-response-form">
-                                    <input type="hidden" name="notification_id" value="<?php echo $notification['notification_id']; ?>">
-                                    <input type="hidden" name="response" value="rejected">
-                                    <button type="submit" name="respond_bet" class="btn btn-danger">Reject</button>
-                                </form>
-                            </div>
-
-                            <script>
-                                document.querySelectorAll('.bet-response-form').forEach(form => {
-                                    form.addEventListener('submit', async (e) => {
-                                        e.preventDefault();
-                                        
-                                        try {
-                                            const formData = new FormData(e.target);
-                                            formData.append('respond_bet', '1');
-                                            
-                                            // Display processing message
-                                            const submitButton = e.target.querySelector('button[type="submit"]');
-                                            const originalText = submitButton.innerHTML;
-                                            submitButton.innerHTML = 'Processing...';
-                                            submitButton.disabled = true;
-                                            
-                                            const response = await fetch(window.location.href, {
-                                                method: 'POST',
-                                                headers: {
-                                                    'X-Requested-With': 'XMLHttpRequest'
-                                                },
-                                                body: formData
-                                            });
-                                            
-                                            if (!response.ok) {
-                                                throw new Error(`Server returned ${response.status}: ${response.statusText}`);
-                                            }
-                                            
-                                            // Get response content type
-                                            const contentType = response.headers.get('Content-Type');
-                                            let result;
-                                            
-                                            if (contentType && contentType.includes('application/json')) {
-                                                result = await response.json();
-                                            } else {
-                                                const text = await response.text();
-                                                console.error('Received non-JSON response:', text.substring(0, 100));
-                                                throw new Error('Server did not return a valid JSON response');
-                                            }
-                                            
-                                            // Reset button state
-                                            submitButton.innerHTML = originalText;
-                                            submitButton.disabled = false;
-                                            
-                                            console.log('Response:', result);
-                                            
-                                            if (result.success) {
-                                                if (result.payment_url) {
-                                                    // For payment URL, we'll do a direct window location change
-                                                    console.log('Redirecting to payment URL:', result.payment_url);
-                                                    window.location.href = result.payment_url;
-                                                    return; // Stop execution here
-                                                } else if (result.redirect_url) {
-                                                    window.location.href = result.redirect_url;
-                                                    return; // Stop execution here
-                                                } else {
-                                                    alert(result.message || 'Bet response submitted successfully');
-                                                    window.location.reload();
-                                                }
-                                            } else {
-                                                const errorMessage = result.errors ? result.errors.join('\n') : 'An unknown error occurred';
-                                                alert('Error: ' + errorMessage);
-                                            }
-                                        } catch (error) {
-                                            console.error('Error processing request:', error);
-                                            alert('Error: ' + error.message);
-                                            
-                                            // Reset buttons on error too
-                                            const submitButton = e.target.querySelector('button[type="submit"]');
-                                            if (submitButton.disabled) {
-                                                submitButton.innerHTML = submitButton.getAttribute('data-original-text') || 'Submit';
-                                                submitButton.disabled = false;
-                                            }
-                                        }
-                                    });
-                                });
-                            </script>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endif; ?>
-
-        <!-- Bets You Created -->
-        <div class="section">
-            <h2>Bets You Created</h2>
-            <?php if (empty($createdBets)): ?>
-                <div class="empty-state">
-                    <i class="fas fa-dice"></i>
-                    <p>You haven't created any bets yet</p>
-                    <a href="create_bet.php" class="btn" style="margin-top: 15px;">Create Your First Bet</a>
-                </div>
-            <?php else: ?>
-                <div class="card-grid">
-                    <?php foreach ($createdBets as $bet): ?>
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="card-title">
-                                    <span>Bet with <?php echo isset($bet['opponent_username']) ? htmlspecialchars($bet['opponent_username']) : 'Pending Participant'; ?></span>
-                                    <span class="badge <?php echo getBetStatusClass($bet['status']); ?>">
-                                        <?php echo ucfirst($bet['status']); ?>
-                                    </span>
-                                </div>
-                                <p class="card-text"><?php echo htmlspecialchars($bet['description']); ?></p>
-                                
-                                <div class="card-details">
-                                    <div class="card-detail">
-                                        <span class="card-detail-label">Stake</span>
-                                        <span class="card-detail-value">
-                                            <?php if ($bet['stake_type'] === 'money'): ?>
-                                                R<?php echo number_format($bet['stake_amount'], 2); ?>
-                                                <?php if (isset($bet['payment_status']) && $bet['payment_status'] === 'pending'): ?>
-                                                    <a href="payment.php?bet_id=<?php echo $bet['bet_id']; ?>&amount=<?php echo $bet['stake_amount']; ?>" 
-                                                       class="btn btn-primary btn-sm">Pay Now</a>
-                                                <?php endif; ?>
-                                            <?php else: ?>
-                                                <?php echo htmlspecialchars($bet['stake_description']); ?>
-                                            <?php endif; ?>
-                                        </span>
-                                    </div>
-                                    <div class="card-detail">
-                                        <span class="card-detail-label">Deadline</span>
-                                        <span class="card-detail-value">
-                                            <?php echo date('M j, Y', strtotime($bet['deadline'])); ?>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+        <div class="nav-tabs">
+            <div class="nav-tab active" data-tab="tab-active">Active Bets</div>
+            <div class="nav-tab" data-tab="tab-pending">Pending Bets</div>
+            <div class="nav-tab" data-tab="tab-completed">Completed Bets</div>
         </div>
 
-        <!-- Bets You're Participating In -->
-        <div class="section">
-            <h2>Bets You're Participating In</h2>
-            <?php if (empty($participatingBets)): ?>
-                <div class="empty-state">
-                    <i class="fas fa-handshake"></i>
-                    <p>You aren't participating in any bets yet</p>
-                </div>
-            <?php else: ?>
-                <div class="card-grid">
-                    <?php foreach ($participatingBets as $bet): ?>
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="card-title">
-                                    <span>Bet from <?php echo htmlspecialchars($bet['creator_username']); ?></span>
-                                    <span class="badge <?php echo getBetStatusClass($bet['status']); ?>">
-                                        <?php echo ucfirst($bet['status']); ?>
-                                    </span>
+        <div class="tab-content">
+            <!-- Active Bets Tab -->
+            <div class="tab-pane active" id="tab-active">
+                <?php if (empty($createdBets)): ?>
+                    <div class="empty-state">
+                        <i class="fas fa-running"></i>
+                        <p>No active bets at the moment</p>
+                    </div>
+                <?php else: ?>
+                    <div class="card-grid">
+                        <?php foreach ($createdBets as $bet): ?>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title"><?php echo htmlspecialchars($bet['title']); ?></h3>
+                                    <p class="card-text"><?php echo htmlspecialchars($bet['description']); ?></p>
+                                    <p class="card-text">
+                                        <small>Stake: <?php echo htmlspecialchars($bet['stake_type']); ?></small>
+                                    </p>
+                                    <span class="badge badge-primary">Active</span>
                                 </div>
-                                <p class="card-text"><?php echo htmlspecialchars($bet['description']); ?></p>
-                                
-                                <div class="card-details">
-                                    <div class="card-detail">
-                                        <span class="card-detail-label">Stake</span>
-                                        <span class="card-detail-value">
-                                            <?php if ($bet['stake_type'] === 'money'): ?>
-                                                R<?php echo number_format($bet['stake_amount'], 2); ?>
-                                                <?php if ($bet['payment_required']): ?>
-                                                    <div class="payment-notice">
-                                                        <p class="text-warning">Payment required to accept this bet</p>
-                                                        <a href="payment.php?bet_id=<?php echo $bet['bet_id']; ?>&amount=<?php echo $bet['stake_amount']; ?>" 
-                                                           class="btn btn-primary btn-sm">Pay Now</a>
-                                                    </div>
+                                <div class="card-actions">
+                                    <a href="/WannaBet/bet/<?php echo $bet['id']; ?>" class="btn">View Details</a>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Pending Bets Tab -->
+            <div class="tab-pane" id="tab-pending">
+                <?php if (empty($pendingNotifications)): ?>
+                    <div class="empty-state">
+                        <i class="fas fa-clock"></i>
+                        <p>No pending bets</p>
+                    </div>
+                <?php else: ?>
+                    <div class="card-grid">
+                        <?php foreach ($pendingNotifications as $notification): ?>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="card-title">
+                                        <span>Bet from <?php echo htmlspecialchars($notification['creator_username']); ?></span>
+                                        <span class="badge badge-warning">Pending</span>
+                                    </div>
+                                    <p class="card-text"><?php echo htmlspecialchars($notification['description']); ?></p>
+                                    
+                                    <div class="card-details">
+                                        <div class="card-detail">
+                                            <span class="card-detail-label">Stake</span>
+                                            <span class="card-detail-value">
+                                                <?php if ($notification['type'] === 'bet_invitation'): ?>
+                                                    <?php echo htmlspecialchars($notification['stake_display']); ?>
+                                                <?php else: ?>
+                                                    <?php echo htmlspecialchars($notification['stake_description']); ?>
                                                 <?php endif; ?>
-                                            <?php else: ?>
-                                                <?php echo htmlspecialchars($bet['stake_description']); ?>
-                                            <?php endif; ?>
-                                        </span>
+                                            </span>
+                                        </div>
+                                        <div class="card-detail">
+                                            <span class="card-detail-label">Deadline</span>
+                                            <span class="card-detail-value"><?php echo date('M j, Y', strtotime($notification['deadline'])); ?></span>
+                                        </div>
                                     </div>
-                                    <div class="card-detail">
-                                        <span class="card-detail-label">Deadline</span>
-                                        <span class="card-detail-value">
-                                            <?php echo date('M j, Y', strtotime($bet['deadline'])); ?>
-                                        </span>
-                                    </div>
+
+                                    <?php if ($notification['type'] === 'bet_invitation'): ?>
+                                        <div class="notification-details">
+                                            <p class="notification-text"><?php echo htmlspecialchars($notification['notification_text']); ?></p>
+                                            <p class="stake-info">
+                                                <strong>Stake:</strong> 
+                                                <?php echo htmlspecialchars($notification['stake_display']); ?>
+                                            </p>
+                                            <p class="deadline-info">
+                                                <strong>Deadline:</strong> 
+                                                <?php echo date('M j, Y', strtotime($notification['deadline'])); ?>
+                                            </p>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                
+                                <div class="card-actions">
+                                    <form method="POST" class="bet-response-form">
+                                        <input type="hidden" name="notification_id" value="<?php echo $notification['notification_id']; ?>">
+                                        <input type="hidden" name="response" value="accepted">
+                                        <button type="submit" name="respond_bet" class="btn btn-success">Accept</button>
+                                    </form>
+                                    <form method="POST" class="bet-response-form">
+                                        <input type="hidden" name="notification_id" value="<?php echo $notification['notification_id']; ?>">
+                                        <input type="hidden" name="response" value="rejected">
+                                        <button type="submit" name="respond_bet" class="btn btn-danger">Reject</button>
+                                    </form>
                                 </div>
 
-                                <?php if ($bet['status'] === 'pending'): ?>
-                                    <div class="card-actions">
-                                        <?php if ($bet['stake_type'] === 'money' && $bet['payment_required']): ?>
-                                            <p class="text-info">You need to pay the stake amount to accept this bet</p>
-                                            <a href="payment.php?bet_id=<?php echo $bet['bet_id']; ?>&amount=<?php echo $bet['stake_amount']; ?>" 
-                                               class="btn btn-primary">Pay Now</a>
-                                        <?php else: ?>
-                                            <form method="POST" class="bet-response-form" style="display: inline-block;">
-                                                <input type="hidden" name="notification_id" value="<?php echo $bet['notification_id'] ?? ''; ?>">
-                                                <input type="hidden" name="response" value="accepted">
-                                                <button type="submit" name="respond_bet" class="btn btn-success">Accept</button>
-                                            </form>
-                                        <?php endif; ?>
-                                        <form method="POST" class="bet-response-form" style="display: inline-block;">
-                                            <input type="hidden" name="notification_id" value="<?php echo $bet['notification_id'] ?? ''; ?>">
-                                            <input type="hidden" name="response" value="rejected">
-                                            <button type="submit" name="respond_bet" class="btn btn-danger">Reject</button>
-                                        </form>
-                                    </div>
-                                <?php endif; ?>
+                                <script>
+                                    document.querySelectorAll('.bet-response-form').forEach(form => {
+                                        form.addEventListener('submit', async (e) => {
+                                            e.preventDefault();
+                                            
+                                            try {
+                                                const formData = new FormData(e.target);
+                                                formData.append('respond_bet', '1');
+                                                
+                                                // Display processing message
+                                                const submitButton = e.target.querySelector('button[type="submit"]');
+                                                const originalText = submitButton.innerHTML;
+                                                submitButton.innerHTML = 'Processing...';
+                                                submitButton.disabled = true;
+                                                
+                                                const response = await fetch(window.location.href, {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'X-Requested-With': 'XMLHttpRequest'
+                                                    },
+                                                    body: formData
+                                                });
+                                                
+                                                if (!response.ok) {
+                                                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                                                }
+                                                
+                                                // Get response content type
+                                                const contentType = response.headers.get('Content-Type');
+                                                let result;
+                                                
+                                                if (contentType && contentType.includes('application/json')) {
+                                                    result = await response.json();
+                                                } else {
+                                                    const text = await response.text();
+                                                    console.error('Received non-JSON response:', text.substring(0, 100));
+                                                    throw new Error('Server did not return a valid JSON response');
+                                                }
+                                                
+                                                // Reset button state
+                                                submitButton.innerHTML = originalText;
+                                                submitButton.disabled = false;
+                                                
+                                                console.log('Response:', result);
+                                                
+                                                if (result.success) {
+                                                    if (result.payment_url) {
+                                                        // For payment URL, we'll do a direct window location change
+                                                        console.log('Redirecting to payment URL:', result.payment_url);
+                                                        window.location.href = result.payment_url;
+                                                        return; // Stop execution here
+                                                    } else if (result.redirect_url) {
+                                                        window.location.href = result.redirect_url;
+                                                        return; // Stop execution here
+                                                    } else {
+                                                        alert(result.message || 'Bet response submitted successfully');
+                                                        window.location.reload();
+                                                    }
+                                                } else {
+                                                    const errorMessage = result.errors ? result.errors.join('\n') : 'An unknown error occurred';
+                                                    alert('Error: ' + errorMessage);
+                                                }
+                                            } catch (error) {
+                                                console.error('Error processing request:', error);
+                                                alert('Error: ' + error.message);
+                                                
+                                                // Reset buttons on error too
+                                                const submitButton = e.target.querySelector('button[type="submit"]');
+                                                if (submitButton.disabled) {
+                                                    submitButton.innerHTML = submitButton.getAttribute('data-original-text') || 'Submit';
+                                                    submitButton.disabled = false;
+                                                }
+                                            }
+                                        });
+                                    });
+                                </script>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Completed Bets Tab -->
+            <div class="tab-pane" id="tab-completed">
+                <?php if (empty($createdBets)): ?>
+                    <div class="empty-state">
+                        <i class="fas fa-flag-checkered"></i>
+                        <p>No completed bets yet</p>
+                    </div>
+                <?php else: ?>
+                    <div class="card-grid">
+                        <?php foreach ($createdBets as $bet): ?>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h3 class="card-title"><?php echo htmlspecialchars($bet['title']); ?></h3>
+                                    <p class="card-text"><?php echo htmlspecialchars($bet['description']); ?></p>
+                                    <p class="card-text">
+                                        <small>Stake: <?php echo htmlspecialchars($bet['stake_type']); ?></small>
+                                    </p>
+                                    <span class="badge <?php echo $bet['winner_id'] == $_SESSION['user_id'] ? 'badge-success' : 'badge-danger'; ?>">
+                                        <?php echo $bet['winner_id'] == $_SESSION['user_id'] ? 'Won' : 'Lost'; ?>
+                                    </span>
+                                </div>
+                                <div class="card-actions">
+                                    <a href="/WannaBet/bet/<?php echo $bet['id']; ?>" class="btn">View Details</a>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </div>
 
@@ -958,6 +932,28 @@ if ($isAjaxRequest) {
                         // Insert before the form
                         form.parentNode.insertBefore(errorAlert, form);
                     });
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab navigation
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all tab panes
+                    document.querySelectorAll('.tab-pane').forEach(pane => {
+                        pane.classList.remove('active');
+                    });
+                    
+                    // Show the corresponding tab pane
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
                 });
             });
         });

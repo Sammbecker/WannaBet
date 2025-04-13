@@ -4,11 +4,14 @@ require_once __DIR__ . '/../controllers/BetController.php';
 require_once __DIR__ . '/../controllers/FriendshipController.php';
 require_once __DIR__ . '/../utils/functions.php';
 
-// Redirect if not logged in
+// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: /WannaBet/login');
     exit();
 }
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Initialize controllers
 $betController = new BetController();
