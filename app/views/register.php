@@ -14,9 +14,10 @@ $userController = new UserController();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $result = $userController->register();
     if (isset($result['success']) && $result['success']) {
-        // Registration successful, redirect happens in controller
+        header('Location: /login');
+        exit;
     } else {
-        $errors = $result['errors'] ?? ['An unknown error occurred'];
+        $errors = isset($result['message']) ? [$result['message']] : ['An unknown error occurred'];
     }
 }
 ?>
@@ -27,84 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - WannaBet</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/common.css">
     <style>
-        :root {
-            --primary-color: #3b82f6;
-            --primary-dark: #2563eb;
-            --secondary-color: #10b981;
-            --accent-color: #f59e0b;
-            --text-color: #f3f4f6;
-            --text-light: #9ca3af;
-            --background-color: #111827;
-            --card-background: #1f2937;
-            --border-color: #374151;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
-            --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
-            --gradient-accent: linear-gradient(135deg, #f59e0b, #d97706);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-color);
-            background-color: var(--background-color);
-            line-height: 1.6;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        header {
-            background-color: rgba(31, 41, 55, 0.8);
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-lg);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--text-color);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-        }
-
-        .logo:hover {
-            transform: translateY(-2px);
-        }
-
-        .logo i {
-            color: var(--primary-color);
-        }
-
         .register-container {
             flex: 1;
             display: flex;
@@ -113,6 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 4rem 0;
             position: relative;
             overflow: hidden;
+            min-height: calc(100vh - 76px);
         }
 
         .register-container::before {
@@ -127,11 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             animation: rotate 20s linear infinite;
         }
 
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
         .register-card {
             background: rgba(31, 41, 55, 0.5);
             backdrop-filter: blur(10px);
@@ -142,17 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             max-width: 500px;
             box-shadow: var(--shadow-xl);
             animation: fadeInUp 1s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .register-header {
@@ -173,91 +83,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 1.1rem;
         }
 
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-color);
-            font-weight: 500;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.5rem;
-            background: rgba(31, 41, 55, 0.3);
-            color: var(--text-color);
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-
-        .form-control::placeholder {
-            color: var(--text-light);
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-            width: 100%;
-            font-size: 1rem;
-        }
-
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .error-message {
-            color: var(--danger-color);
-            background: rgba(239, 68, 68, 0.1);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         .register-footer {
             text-align: center;
             margin-top: 2rem;
             color: var(--text-light);
-        }
-
-        .register-footer a {
-            color: var(--primary-color);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .register-footer a:hover {
-            color: var(--text-color);
-            text-decoration: underline;
         }
 
         .theme-toggle {
@@ -283,6 +112,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             box-shadow: var(--shadow-xl);
         }
 
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .register-card {
                 padding: 2rem;
@@ -304,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <header>
         <div class="container">
             <nav>
-                <a href="/WannaBet" class="logo">
+                <a href="/" class="logo">
                     <i class="fas fa-handshake"></i>
                     WannaBet
                 </a>
@@ -329,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
 
-            <form action="/WannaBet/register" method="POST">
+            <form method="POST" action="/register">
                 <div class="form-group">
                     <label for="username">Username</label>
                     <input type="text" id="username" name="username" class="form-control" required>
@@ -354,8 +188,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
 
             <div class="register-footer">
-                <p>Already have an account? <a href="/WannaBet/login">Sign in</a></p>
-                <p>&copy; 2025 WannaBet. All rights reserved. Created by Karla, Dan, and Ruby.</p>
+                <p>Already have an account? <a href="/login">Sign in</a></p>
+                <p>&copy; 2025 WannaBet. All rights reserved.</p>
             </div>
         </div>
     </div>

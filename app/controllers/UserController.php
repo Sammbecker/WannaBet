@@ -77,7 +77,7 @@ class UserController {
      */
     public function logout() {
         session_destroy();
-        header('Location: /WannaBet');
+        header('Location: /');
         exit;
     }
     

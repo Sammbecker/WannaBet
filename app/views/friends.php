@@ -7,7 +7,7 @@ require_once __DIR__ . '/../utils/functions.php';
 
 // Redirect if not logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /WannaBet/login');
+    header('Location: /login');
     exit();
 }
 
@@ -68,103 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Friends - WannaBet</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/common.css">
     <style>
-        :root {
-            --primary-color: #000000;
-            --secondary-color: #333333;
-            --background-color: #f9f9f9;
-            --card-bg: #ffffff;
-            --text-color: #111111;
-            --text-light: #555555;
-            --border-color: #eeeeee;
-            --accent-color: #000000;
-            --hover-accent: #333333;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.05);
-            --gradient-black: linear-gradient(145deg, #000000, #222222);
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --info-color: #3b82f6;
-        }
-
-        [data-theme="dark"] {
-            --primary-color: #ffffff;
-            --secondary-color: #cccccc;
-            --background-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f3f4f6;
-            --text-light: #d1d5db;
-            --border-color: #2e2e2e;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.3);
-            --shadow-lg: 0 10px 15px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        h1, h2, h3 {
-            color: var(--primary-color);
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        h2 {
-            font-size: 20px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
-        }
-
-        h3 {
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-
-        .alert {
-            padding: 10px 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
-        .alert-success {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        .alert-error {
-            background-color: var(--error-color);
-            color: white;
-        }
-
+        /* Friends page specific styles */
         .card-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -172,20 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-bottom: 40px;
         }
 
-        .card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 15px;
-            box-shadow: var(--shadow-md);
-        }
-
-        .card-body {
-            margin-bottom: 15px;
-        }
-
         .card-title {
             font-weight: 600;
             margin-bottom: 5px;
+            font-size: 1.1rem;
         }
 
         .card-text {
@@ -197,122 +93,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .card-actions {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
-        button, .btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 8px 15px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        button:hover, .btn:hover {
-            background: var(--hover-accent);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-success {
-            background: var(--success-color);
-        }
-
-        .btn-success:hover {
-            background: #0ea573;
-        }
-
-        .btn-danger {
-            background: var(--error-color);
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .badge-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .badge-warning {
-            background: var(--warning-color);
-            color: white;
-        }
-
-        .nav-tabs {
+        .section-header {
             display: flex;
-            border-bottom: 1px solid var(--border-color);
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-        }
-
-        .nav-tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .nav-tab.active {
-            border-bottom-color: var(--primary-color);
-            font-weight: 600;
-        }
-
-        .tab-content {
-            margin-bottom: 30px;
-        }
-
-        .tab-pane {
-            display: none;
-        }
-
-        .tab-pane.active {
-            display: block;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .search-box {
+            display: flex;
+            gap: 10px;
             margin-bottom: 20px;
         }
 
         .search-box input {
-            width: 100%;
+            flex-grow: 1;
             padding: 10px 15px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
-            background: var(--card-bg);
-            color: var(--text-color);
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--primary-color);
+            font-size: 16px;
         }
 
         .empty-state {
-            background: var(--card-bg);
+            background: var(--card-background);
             border-radius: 10px;
             padding: 30px;
             text-align: center;
             color: var(--text-light);
+            margin-bottom: 40px;
         }
 
         .empty-state i {
@@ -321,20 +134,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             opacity: 0.5;
         }
 
+        .card-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .badge-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .user-initial {
+            text-transform: uppercase;
+        }
+
         @media (max-width: 768px) {
             .card-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .card-actions {
+                flex-direction: column;
+            }
+            
+            .card-actions .btn {
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Friends</h1>
-            <a href="/WannaBet/home" class="btn btn-outline">Back to Home</a>
-        </header>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="/home" class="logo">
+                    <i class="fas fa-user-friends"></i>
+                    WannaBet
+                </a>
+                <div class="nav-links">
+                    <a href="/home">Dashboard</a>
+                    <a href="/my_bets">My Bets</a>
+                    <a href="/create_bet" class="btn btn-primary">Create Bet</a>
+                </div>
+            </nav>
+        </div>
+    </header>
 
+    <div class="container">
         <?php if ($successMessage): ?>
             <div class="alert alert-success">
                 <?php echo htmlspecialchars($successMessage); ?>
@@ -344,181 +207,197 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($errorMessage): ?>
             <div class="alert alert-error">
                 <?php echo htmlspecialchars($errorMessage); ?>
+                <?php if (isset($_POST) && !empty($_POST)): ?>
+                    <div style="margin-top: 10px; font-size: 0.8em;">
+                        <strong>Debug Info:</strong> 
+                        <?php foreach ($_POST as $key => $value): ?>
+                            <?php echo htmlspecialchars($key) . ': ' . htmlspecialchars($value) . '; '; ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
-        <div class="nav-tabs">
-            <div class="nav-tab active" data-tab="tab-find">Find Friends</div>
-            <div class="nav-tab" data-tab="tab-current">My Friends</div>
-            <div class="nav-tab" data-tab="tab-requests">Friend Requests</div>
+        <div class="section-header">
+            <h1>My Friends</h1>
         </div>
 
-        <div class="tab-content">
-            <!-- Find Friends Tab -->
-            <div class="tab-pane active" id="tab-find">
-                <div class="search-box">
-                    <input type="text" id="search-users" placeholder="Search users by username or email...">
+        <?php if (empty($friends)): ?>
+            <div class="empty-state">
+                <i class="fas fa-user-friends"></i>
+                <h3>You don't have any friends yet</h3>
+                <p>Send friend requests to start connecting!</p>
+            </div>
+        <?php else: ?>
+            <div class="card-grid">
+                <?php foreach ($friends as $friend): ?>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="user-avatar">
+                                <span class="user-initial"><?php echo substr($friend['username'], 0, 1); ?></span>
+                            </div>
+                            <h3 class="card-title"><?php echo htmlspecialchars($friend['username']); ?></h3>
+                            <p class="card-text"><?php echo htmlspecialchars($friend['email']); ?></p>
+                            <div class="card-actions">
+                                <a href="/create_bet?friend_id=<?php echo $friend['id']; ?>" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create Bet
+                                </a>
+                                <form method="POST" action="/friends">
+                                    <input type="hidden" name="friend_id" value="<?php echo $friend['id']; ?>">
+                                    <button type="submit" name="remove_friend" class="btn btn-outline">
+                                        <i class="fas fa-user-minus"></i> Remove
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="section-header">
+            <h2>Find New Friends</h2>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="userSearchInput" placeholder="Search for users...">
+            <button class="btn btn-primary" id="searchButton">Search</button>
+        </div>
+
+        <div id="potentialFriends" class="card-grid">
+            <?php if (empty($potentialFriends)): ?>
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h3>No users found</h3>
+                    <p>Try searching for someone else.</p>
                 </div>
-
-                <?php if (empty($potentialFriends)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-users"></i>
-                        <p>No more users to add as friends</p>
-                    </div>
-                <?php else: ?>
-                    <div class="card-grid">
-                        <?php foreach ($potentialFriends as $user): ?>
-                            <div class="card user-card">
-                                <div class="card-body">
-                                    <h3 class="card-title"><?php echo htmlspecialchars($user['username']); ?></h3>
-                                    <p class="card-text"><?php echo htmlspecialchars($user['email']); ?></p>
-                                </div>
-                                <div class="card-actions">
-                                    <form method="POST">
-                                        <input type="hidden" name="friend_id" value="<?php echo $user['id']; ?>">
-                                        <button type="submit" name="send_request" class="btn">Add Friend</button>
-                                    </form>
-                                </div>
+            <?php else: ?>
+                <?php foreach ($potentialFriends as $user): ?>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="user-avatar">
+                                <span class="user-initial"><?php echo substr($user['username'], 0, 1); ?></span>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- My Friends Tab -->
-            <div class="tab-pane" id="tab-current">
-                <?php if (empty($friends)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-user-friends"></i>
-                        <p>You don't have any friends yet</p>
-                    </div>
-                <?php else: ?>
-                    <div class="card-grid">
-                        <?php foreach ($friends as $friend): ?>
-                            <div class="card">
-                                <div class="card-body">
-                                    <h3 class="card-title"><?php echo htmlspecialchars($friend['username']); ?></h3>
-                                    <p class="card-text"><?php echo htmlspecialchars($friend['email']); ?></p>
-                                </div>
-                                <div class="card-actions">
-                                    <a href="/WannaBet/create_bet?friend_id=<?php echo $friend['id']; ?>" class="btn btn-success">Create Bet</a>
-                                    <form method="POST" style="display: inline;">
-                                        <input type="hidden" name="friend_id" value="<?php echo $friend['id']; ?>">
-                                        <button type="submit" name="remove_friend" class="btn btn-danger">Remove</button>
-                                    </form>
-                                </div>
+                            <h3 class="card-title"><?php echo htmlspecialchars($user['username']); ?></h3>
+                            <p class="card-text"><?php echo htmlspecialchars($user['email']); ?></p>
+                            <div class="card-actions">
+                                <form method="POST" action="/friends">
+                                    <input type="hidden" name="recipient_id" value="<?php echo $user['id']; ?>">
+                                    <button type="submit" name="send_request" class="btn btn-primary">
+                                        <i class="fas fa-user-plus"></i> Add Friend
+                                    </button>
+                                </form>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- Friend Requests Tab -->
-            <div class="tab-pane" id="tab-requests">
-                <h2>Pending Requests</h2>
-                <?php if (empty($receivedRequests) && empty($sentRequests)): ?>
-                    <div class="empty-state">
-                        <i class="fas fa-envelope-open"></i>
-                        <p>No pending friend requests</p>
-                    </div>
-                <?php else: ?>
-                    <?php if (!empty($receivedRequests)): ?>
-                        <h3>Requests Received</h3>
-                        <div class="card-grid">
-                            <?php foreach ($receivedRequests as $request): ?>
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h3 class="card-title"><?php echo htmlspecialchars($request['username']); ?></h3>
-                                        <p class="card-text"><?php echo htmlspecialchars($request['email']); ?></p>
-                                        <p class="card-text">
-                                            <small>Sent on: <?php echo date('M j, Y', strtotime($request['request_date'])); ?></small>
-                                        </p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <form method="POST">
-                                            <input type="hidden" name="friendship_id" value="<?php echo $request['friendship_id']; ?>">
-                                            <input type="hidden" name="response" value="accepted">
-                                            <button type="submit" name="respond_request" class="btn btn-success">Accept</button>
-                                        </form>
-                                        <form method="POST">
-                                            <input type="hidden" name="friendship_id" value="<?php echo $request['friendship_id']; ?>">
-                                            <input type="hidden" name="response" value="rejected">
-                                            <button type="submit" name="respond_request" class="btn btn-danger">Reject</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
                         </div>
-                    <?php endif; ?>
-
-                    <?php if (!empty($sentRequests)): ?>
-                        <h3>Requests Sent</h3>
-                        <div class="card-grid">
-                            <?php foreach ($sentRequests as $request): ?>
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h3 class="card-title"><?php echo htmlspecialchars($request['username']); ?></h3>
-                                        <p class="card-text"><?php echo htmlspecialchars($request['email']); ?></p>
-                                        <p class="card-text">
-                                            <small>Sent on: <?php echo date('M j, Y', strtotime($request['request_date'])); ?></small>
-                                        </p>
-                                        <span class="badge badge-warning">Pending</span>
-                                    </div>
-                                    <div class="card-actions">
-                                        <form method="POST">
-                                            <input type="hidden" name="friend_id" value="<?php echo $request['id']; ?>">
-                                            <button type="submit" name="remove_friend" class="btn btn-danger">Cancel Request</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                <?php endif; ?>
-            </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
+
+        <?php if (!empty($receivedRequests)): ?>
+            <div class="section-header">
+                <h2>Friend Requests</h2>
+                <span class="card-badge badge-primary"><?php echo count($receivedRequests); ?></span>
+            </div>
+
+            <div class="card-grid">
+                <?php foreach ($receivedRequests as $request): ?>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="user-avatar">
+                                <span class="user-initial"><?php echo substr($request['username'], 0, 1); ?></span>
+                            </div>
+                            <h3 class="card-title"><?php echo htmlspecialchars($request['username']); ?></h3>
+                            <p class="card-text"><?php echo htmlspecialchars($request['email']); ?></p>
+                            <p class="card-text">
+                                <small>Received: <?php echo formatDate($request['request_date']); ?></small>
+                            </p>
+                            <div class="card-actions">
+                                <form method="POST" action="/friends">
+                                    <input type="hidden" name="request_id" value="<?php echo $request['friendship_id']; ?>">
+                                    <input type="hidden" name="response" value="accept">
+                                    <button type="submit" name="respond_request" class="btn btn-success">
+                                        <i class="fas fa-check"></i> Accept
+                                    </button>
+                                </form>
+                                <form method="POST" action="/friends">
+                                    <input type="hidden" name="request_id" value="<?php echo $request['friendship_id']; ?>">
+                                    <input type="hidden" name="response" value="reject">
+                                    <button type="submit" name="respond_request" class="btn btn-danger">
+                                        <i class="fas fa-times"></i> Reject
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($sentRequests)): ?>
+            <div class="section-header">
+                <h2>Sent Requests</h2>
+            </div>
+
+            <div class="card-grid">
+                <?php foreach ($sentRequests as $request): ?>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="user-avatar">
+                                <span class="user-initial"><?php echo substr($request['username'], 0, 1); ?></span>
+                            </div>
+                            <h3 class="card-title"><?php echo htmlspecialchars($request['username']); ?></h3>
+                            <p class="card-text"><?php echo htmlspecialchars($request['email']); ?></p>
+                            <p class="card-text">
+                                <small>Sent: <?php echo formatDate($request['request_date']); ?></small>
+                            </p>
+                            <div class="card-actions">
+                                <form method="POST" action="/friends">
+                                    <input type="hidden" name="request_id" value="<?php echo $request['friendship_id']; ?>">
+                                    <input type="hidden" name="response" value="cancel">
+                                    <button type="submit" name="respond_request" class="btn btn-outline">
+                                        <i class="fas fa-times"></i> Cancel Request
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Tab navigation
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Remove active class from all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
-                    // Add active class to clicked tab
-                    this.classList.add('active');
-                    
-                    // Hide all tab panes
-                    document.querySelectorAll('.tab-pane').forEach(pane => {
-                        pane.classList.remove('active');
-                    });
-                    
-                    // Show the corresponding tab pane
-                    const tabId = this.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                });
+        // Simple search implementation
+        document.getElementById('searchButton').addEventListener('click', function() {
+            const searchQuery = document.getElementById('userSearchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('#potentialFriends .card');
+            
+            let foundAny = false;
+            
+            cards.forEach(card => {
+                const username = card.querySelector('.card-title').textContent.toLowerCase();
+                const email = card.querySelector('.card-text').textContent.toLowerCase();
+                
+                if (username.includes(searchQuery) || email.includes(searchQuery)) {
+                    card.style.display = 'block';
+                    foundAny = true;
+                } else {
+                    card.style.display = 'none';
+                }
             });
+            
+            // Show empty state if no results
+            const emptyState = document.querySelector('#potentialFriends .empty-state');
+            if (emptyState) {
+                emptyState.style.display = foundAny ? 'none' : 'block';
+            }
+        });
 
-            // Search functionality
-            const searchInput = document.getElementById('search-users');
-            if (searchInput) {
-                searchInput.addEventListener('keyup', function() {
-                    const searchTerm = this.value.toLowerCase();
-                    const userCards = document.querySelectorAll('.user-card');
-                    
-                    userCards.forEach(card => {
-                        const username = card.querySelector('.card-title').textContent.toLowerCase();
-                        const email = card.querySelector('.card-text').textContent.toLowerCase();
-                        
-                        if (username.includes(searchTerm) || email.includes(searchTerm)) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                });
+        // Allow searching by pressing Enter
+        document.getElementById('userSearchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('searchButton').click();
             }
         });
     </script>

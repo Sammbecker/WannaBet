@@ -24,7 +24,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // Define base URL
-define('BASE_URL', getenv('APP_URL') ?: 'http://localhost/WannaBet');
+define('BASE_URL', getenv('APP_URL') ?: 'http://localhost:8000');
 
 // Error reporting
 error_reporting(E_ALL);

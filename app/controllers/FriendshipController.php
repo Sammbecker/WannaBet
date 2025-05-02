@@ -23,7 +23,7 @@ class FriendshipController {
         // Process friend request form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = $_SESSION['user_id'];
-            $friendId = intval($_POST['friend_id'] ?? 0);
+            $friendId = intval($_POST['recipient_id'] ?? $_POST['friend_id'] ?? 0);
             
             if ($friendId <= 0) {
                 return ['success' => false, 'errors' => ['Invalid friend selection']];
@@ -137,22 +137,34 @@ class FriendshipController {
         // Process form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userId = $_SESSION['user_id'];
-            $friendshipId = intval($_POST['friendship_id'] ?? 0);
+            // Accept either request_id or friendship_id from the form
+            $friendshipId = intval($_POST['request_id'] ?? $_POST['friendship_id'] ?? 0);
             $response = $_POST['response'] ?? '';
             
             if ($friendshipId <= 0) {
                 return ['success' => false, 'errors' => ['Invalid friend request']];
             }
             
-            if ($response !== 'accepted' && $response !== 'rejected') {
+            // Map response values to database status values
+            if ($response === 'accept') {
+                $status = 'accepted';
+            } elseif ($response === 'reject' || $response === 'cancel') {
+                // Delete the friendship completely on rejection
+                $result = $this->friendshipModel->removeFriend($userId, $friendshipId);
+                if ($result) {
+                    return ['success' => true, 'message' => 'Friend request ' . ($response === 'cancel' ? 'cancelled' : 'rejected') . ' successfully'];
+                } else {
+                    return ['success' => false, 'errors' => ['Failed to ' . ($response === 'cancel' ? 'cancel' : 'reject') . ' friend request']];
+                }
+            } else {
                 return ['success' => false, 'errors' => ['Invalid response']];
             }
             
-            // Update the request
-            $result = $this->friendshipModel->respondToRequest($friendshipId, $userId, $response);
+            // Update the request status
+            $result = $this->friendshipModel->respondToRequest($friendshipId, $userId, $status);
             
             if ($result) {
-                return ['success' => true, 'message' => 'Friend request ' . $response . ' successfully'];
+                return ['success' => true, 'message' => 'Friend request accepted successfully'];
             } else {
                 return ['success' => false, 'errors' => ['Failed to respond to friend request']];
             }

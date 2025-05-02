@@ -3,7 +3,7 @@ session_start();
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /WannaBet/login');
+    header('Location: /login');
     exit();
 }
 
@@ -18,100 +18,9 @@ ini_set('display_errors', 1);
     <title>Bet History - WannaBet</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/common.css">
     <style>
-        :root {
-            --primary-color: #000000;
-            --secondary-color: #333333;
-            --background-color: #f9f9f9;
-            --card-bg: #ffffff;
-            --text-color: #111111;
-            --text-light: #555555;
-            --border-color: #eeeeee;
-            --accent-color: #000000;
-            --hover-accent: #333333;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.05);
-            --gradient-black: linear-gradient(145deg, #000000, #222222);
-            --win-color: #22c55e;
-            --lose-color: #ef4444;
-            --draw-color: #3b82f6;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        /* Navbar */
-        .navbar {
-            background: var(--gradient-black);
-            padding: 1.2rem 0;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: var(--shadow-md);
-        }
-
-        .navbar-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-weight: 800;
-            font-size: 1.5rem;
-            letter-spacing: 2px;
-            cursor: pointer;
-        }
-
-        .user-nav {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .greeting {
-            font-weight: 500;
-        }
-
-        .logout-btn {
-            color: white;
-            text-decoration: none;
-            padding: 0.6rem 1.2rem;
-            background: rgba(255,255,255,0.15);
-            border-radius: 2rem;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.25);
-            transform: translateY(-1px);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 3rem auto;
-            padding: 0 2rem;
-        }
-
-        /* Page Header */
+        /* Bet history page specific styles */
         .page-header {
             margin-bottom: 3rem;
             display: flex;
@@ -124,7 +33,7 @@ ini_set('display_errors', 1);
         .page-title {
             font-size: 2rem;
             font-weight: 800;
-            background: var(--gradient-black);
+            background: var(--gradient-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             display: inline-block;
@@ -140,21 +49,20 @@ ini_set('display_errors', 1);
             transition: all 0.3s;
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
-            background: var(--card-bg);
+            background: var(--card-background);
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--border-color);
         }
 
         .go-back:hover {
-            background: var(--accent-color);
+            background: var(--primary-color);
             color: white;
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
 
-        /* Filter Options */
         .filter-container {
-            background: var(--card-bg);
+            background: var(--card-background);
             padding: 1.5rem;
             border-radius: 1rem;
             box-shadow: var(--shadow-md);
@@ -183,7 +91,8 @@ ini_set('display_errors', 1);
             border: 1px solid var(--border-color);
             font-family: 'Inter', sans-serif;
             font-size: 0.9rem;
-            background: white;
+            background: var(--card-background);
+            color: var(--text-color);
         }
 
         .search-box {
@@ -198,6 +107,8 @@ ini_set('display_errors', 1);
             border: 1px solid var(--border-color);
             width: 100%;
             font-family: 'Inter', sans-serif;
+            background: var(--card-background);
+            color: var(--text-color);
         }
 
         .search-icon {
@@ -208,9 +119,8 @@ ini_set('display_errors', 1);
             color: var(--text-light);
         }
 
-        /* Bet History List */
         .history-container {
-            background: var(--card-bg);
+            background: var(--card-background);
             padding: 2rem;
             border-radius: 1rem;
             box-shadow: var(--shadow-md);
@@ -287,17 +197,17 @@ ini_set('display_errors', 1);
         }
 
         .result-win {
-            background: var(--win-color);
+            background: var(--success-color);
             color: white;
         }
 
         .result-lose {
-            background: var(--lose-color);
+            background: var(--danger-color);
             color: white;
         }
 
         .result-draw {
-            background: var(--draw-color);
+            background: var(--primary-color);
             color: white;
         }
 
@@ -305,7 +215,6 @@ ini_set('display_errors', 1);
             font-weight: 700;
         }
 
-        /* Pagination */
         .pagination {
             display: flex;
             justify-content: center;
@@ -327,16 +236,15 @@ ini_set('display_errors', 1);
         }
 
         .page-item:hover {
-            background: var(--accent-color);
+            background: var(--primary-color);
             color: white;
         }
 
         .page-item.active {
-            background: var(--accent-color);
+            background: var(--primary-color);
             color: white;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
@@ -361,64 +269,10 @@ ini_set('display_errors', 1);
             margin: 0 auto 1.5rem;
         }
 
-        .create-bet-btn {
-            display: inline-block;
-            background: var(--accent-color);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .create-bet-btn:hover {
-            background: var(--hover-accent);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .filter-container {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 1.25rem;
-            }
-            
-            .filter-group {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .search-box {
-                width: 100%;
-                max-width: none;
-            }
-            
-            .history-container {
-                padding: 1.5rem;
-            }
-            
-            .bet-result {
-                width: 100%;
-                align-items: flex-start;
-                margin-top: 0.5rem;
-            }
-        }
-
-        /* Rebet Button & Modal Styles */
-        .action-buttons {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 0.75rem;
-            justify-content: flex-end;
-        }
-
         .rebet-btn {
             padding: 0.5rem 1rem;
             border-radius: 0.5rem;
-            background: var(--accent-color);
+            background: var(--primary-color);
             color: white;
             border: none;
             font-weight: 600;
@@ -431,7 +285,7 @@ ini_set('display_errors', 1);
         }
 
         .rebet-btn:hover {
-            background: var(--hover-accent);
+            background: var(--primary-dark);
             transform: translateY(-2px);
         }
 
@@ -457,7 +311,7 @@ ini_set('display_errors', 1);
         }
 
         .modal-container {
-            background: var(--card-bg);
+            background: var(--card-background);
             padding: 2rem;
             border-radius: 1rem;
             width: 90%;
@@ -541,8 +395,8 @@ ini_set('display_errors', 1);
         }
 
         .stake-option.selected {
-            border-color: var(--accent-color);
-            background: rgba(0,0,0,0.02);
+            border-color: var(--primary-color);
+            background: rgba(59, 130, 246, 0.1);
             font-weight: 600;
         }
 
@@ -573,35 +427,65 @@ ini_set('display_errors', 1);
         }
 
         .cancel-btn {
-            background: #f5f5f5;
+            background: rgba(255, 255, 255, 0.1);
             color: var(--text-color);
         }
 
         .confirm-btn {
-            background: var(--accent-color);
+            background: var(--primary-color);
             color: white;
         }
 
         .confirm-btn:hover {
-            background: var(--hover-accent);
+            background: var(--primary-dark);
+        }
+
+        @media (max-width: 768px) {
+            .filter-container {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 1.25rem;
+            }
+            
+            .filter-group {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .search-box {
+                width: 100%;
+                max-width: none;
+            }
+            
+            .history-container {
+                padding: 1.5rem;
+            }
+            
+            .bet-result {
+                width: 100%;
+                align-items: flex-start;
+                margin-top: 0.5rem;
+            }
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="navbar-container">
-            <div class="logo" onclick="location.href='home.php';">WANNABET</div>
-            <div class="user-nav">
-                <div class="greeting">Hey <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?>!</div>
-                <a href="logout.php" class="logout-btn">LOG OUT</a>
-            </div>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="/home" class="logo">WANNABET</a>
+                <div class="user-info">
+                    <div>Hey <?php echo htmlspecialchars($_SESSION['username'] ?? 'User'); ?>!</div>
+                    <a href="/logout" class="btn btn-outline">LOG OUT</a>
+                </div>
+            </nav>
         </div>
-    </nav>
+    </header>
 
     <div class="container">
         <div class="page-header">
             <h1 class="page-title">Bet History</h1>
-            <a href="home.php" class="go-back">
+            <a href="/home" class="go-back">
                 <i class="fas fa-arrow-left"></i>
                 Back to Dashboard
             </a>

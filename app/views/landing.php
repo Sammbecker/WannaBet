@@ -1,7 +1,7 @@
 <?php
 // Redirect to home if already logged in
 if (isset($_SESSION['user_id'])) {
-    header("Location: /WannaBet/home");
+    header("Location: /home");
     exit;
 }
 ?>
@@ -12,145 +12,9 @@ if (isset($_SESSION['user_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WannaBet - Friendly Betting Made Simple</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/common.css">
     <style>
-        :root {
-            --primary-color: #3b82f6;
-            --primary-dark: #2563eb;
-            --secondary-color: #10b981;
-            --accent-color: #f59e0b;
-            --text-color: #f3f4f6;
-            --text-light: #9ca3af;
-            --background-color: #111827;
-            --card-background: #1f2937;
-            --border-color: #374151;
-            --danger-color: #ef4444;
-            --success-color: #10b981;
-            --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
-            --gradient-accent: linear-gradient(135deg, #f59e0b, #d97706);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: var(--text-color);
-            background-color: var(--background-color);
-            line-height: 1.6;
-        }
-
-        header {
-            background-color: rgba(31, 41, 55, 0.8);
-            backdrop-filter: blur(10px);
-            box-shadow: var(--shadow-lg);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--text-color);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s;
-        }
-
-        .logo:hover {
-            transform: translateY(-2px);
-        }
-
-        .logo i {
-            color: var(--primary-color);
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-light);
-            font-weight: 500;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .nav-links a:hover {
-            color: var(--text-color);
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--gradient-primary);
-            transition: width 0.3s;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--text-color);
-            border: 2px solid var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary-color);
-            transform: translateY(-2px);
-        }
-
+        /* Landing page specific styles */
         .hero {
             padding: 8rem 0;
             text-align: center;
@@ -168,11 +32,6 @@ if (isset($_SESSION['user_id'])) {
             background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
             z-index: -1;
             animation: rotate 20s linear infinite;
-        }
-
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
         }
 
         .hero h1 {
@@ -256,17 +115,6 @@ if (isset($_SESSION['user_id'])) {
             font-size: 1.5rem;
         }
 
-        .feature-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        .feature-card p {
-            color: var(--text-light);
-            line-height: 1.8;
-        }
-
         .how-it-works {
             padding: 6rem 0;
             background-color: var(--background-color);
@@ -309,15 +157,6 @@ if (isset($_SESSION['user_id'])) {
             font-size: 1.25rem;
         }
 
-        .step h3 {
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        .step p {
-            color: var(--text-light);
-        }
-
         .testimonials {
             padding: 6rem 0;
             background-color: var(--card-background);
@@ -352,18 +191,6 @@ if (isset($_SESSION['user_id'])) {
             border-color: var(--primary-color);
         }
 
-        .testimonial p {
-            font-size: 1.1rem;
-            line-height: 1.8;
-            margin-bottom: 1.5rem;
-            color: var(--text-color);
-        }
-
-        .testimonial-author {
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
         .testimonial-controls {
             display: flex;
             justify-content: center;
@@ -385,19 +212,6 @@ if (isset($_SESSION['user_id'])) {
             transform: scale(1.2);
         }
 
-        footer {
-            background-color: var(--card-background);
-            padding: 4rem 0 2rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-
         .footer-logo {
             font-size: 1.5rem;
             font-weight: bold;
@@ -411,12 +225,6 @@ if (isset($_SESSION['user_id'])) {
 
         .footer-logo i {
             color: var(--primary-color);
-        }
-
-        .footer-info p {
-            color: var(--text-light);
-            margin-bottom: 1.5rem;
-            line-height: 1.8;
         }
 
         .social-links {
@@ -464,23 +272,9 @@ if (isset($_SESSION['user_id'])) {
             transform: translateX(5px);
         }
 
-        .copyright {
-            text-align: center;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border-color);
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -490,10 +284,6 @@ if (isset($_SESSION['user_id'])) {
 
             .hero p {
                 font-size: 1.1rem;
-            }
-
-            .nav-links {
-                display: none;
             }
 
             .hero-buttons {
@@ -520,8 +310,8 @@ if (isset($_SESSION['user_id'])) {
                     <a href="#testimonials">Testimonials</a>
                 </div>
                 <div>
-                    <a href="/WannaBet/login" class="btn btn-outline">Log In</a>
-                    <a href="/WannaBet/register" class="btn btn-primary">Sign Up</a>
+                    <a href="/login" class="btn btn-outline" onclick="console.log('Login button clicked, navigating to:', '/login')">Log In</a>
+                    <a href="/register" class="btn btn-primary">Sign Up</a>
                 </div>
             </nav>
         </div>
@@ -532,7 +322,7 @@ if (isset($_SESSION['user_id'])) {
             <h1>Friendly Betting Made Simple</h1>
             <p>WannaBet makes it easy to create fun, friendly bets with your friends, track outcomes, and settle up afterward - all in one place.</p>
             <div class="hero-buttons">
-                <a href="/WannaBet/register" class="btn btn-primary">Get Started</a>
+                <a href="/register" class="btn btn-primary">Get Started</a>
                 <a href="#how-it-works" class="btn btn-outline">Learn More</a>
             </div>
         </div>
@@ -677,7 +467,7 @@ if (isset($_SESSION['user_id'])) {
                         <li><a href="#features">Features</a></li>
                         <li><a href="#how-it-works">How It Works</a></li>
                         <li><a href="#testimonials">Testimonials</a></li>
-                        <li><a href="/WannaBet/register">Sign Up</a></li>
+                        <li><a href="/register">Sign Up</a></li>
                     </ul>
                 </div>
                 <div class="footer-links">
@@ -697,8 +487,9 @@ if (isset($_SESSION['user_id'])) {
                     </ul>
                 </div>
             </div>
-            <div class="copyright">
-                &copy; 2025 WannaBet. All rights reserved. Created by Karla, Dan, and Ruby.
+            <div class="footer">
+                <p>Don't have an account? <a href="/register">Sign up</a></p>
+                <p>&copy; 2025 WannaBet. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -741,6 +532,23 @@ if (isset($_SESSION['user_id'])) {
                         block: 'start'
                     });
                 }
+            });
+        });
+
+        // Debug information
+        console.log('Current URL:', window.location.href);
+        console.log('Base URL:', window.location.origin);
+        console.log('Pathname:', window.location.pathname);
+
+        // Add click handlers to all navigation links
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                console.log('Link clicked:', {
+                    href: this.href,
+                    pathname: this.pathname,
+                    origin: window.location.origin,
+                    currentPath: window.location.pathname
+                });
             });
         });
     </script>

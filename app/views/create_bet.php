@@ -1,12 +1,14 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../controllers/BetController.php';
 require_once __DIR__ . '/../controllers/FriendshipController.php';
 require_once __DIR__ . '/../utils/functions.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header('Location: /WannaBet/login');
+    header('Location: /login');
     exit();
 }
 
@@ -59,185 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
     <title>Create a New Bet - WannaBet</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/common.css">
     <style>
-        :root {
-            --primary-color: #000000;
-            --secondary-color: #333333;
-            --background-color: #f9f9f9;
-            --card-bg: #ffffff;
-            --text-color: #111111;
-            --text-light: #555555;
-            --border-color: #eeeeee;
-            --accent-color: #000000;
-            --hover-accent: #333333;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
-            --shadow-lg: 0 10px 15px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.05);
-            --gradient-black: linear-gradient(145deg, #000000, #222222);
-            --success-color: #10b981;
-            --warning-color: #f59e0b;
-            --error-color: #ef4444;
-            --info-color: #3b82f6;
-        }
-
-        /* Dark mode colors */
-        [data-theme="dark"] {
-            --primary-color: #ffffff;
-            --secondary-color: #cccccc;
-            --background-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #f3f4f6;
-            --text-light: #d1d5db;
-            --border-color: #2e2e2e;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.3);
-            --shadow-lg: 0 10px 15px rgba(0,0,0,0.4), 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        h1, h2, h3 {
-            color: var(--primary-color);
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 700;
-        }
-
-        .alert {
-            padding: 10px 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-
-        .alert-success {
-            background-color: var(--success-color);
-            color: white;
-        }
-
-        .alert-error {
-            background-color: var(--error-color);
-            color: white;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: var(--shadow-md);
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            font-size: 16px;
-            background-color: var(--card-bg);
-            color: var(--text-color);
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        button, .btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s;
-        }
-
-        button:hover, .btn:hover {
-            background: var(--hover-accent);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-block {
-            display: block;
-            width: 100%;
-        }
-
-        .empty-state {
-            background: var(--card-bg);
-            border-radius: 10px;
-            padding: 30px;
-            text-align: center;
-            color: var(--text-light);
-        }
-
-        .empty-state i {
-            font-size: 40px;
-            margin-bottom: 15px;
-            opacity: 0.5;
-        }
-
-        .required {
-            color: var(--error-color);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-        }
-
+        /* Create bet page specific styles */
         .stake-type-selector {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -256,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
 
         .stake-type-option.active {
             border-color: var(--accent-color);
-            background-color: var(--accent-color-light);
+            background-color: rgba(245, 158, 11, 0.1);
         }
 
         .stake-type-option i {
@@ -275,9 +101,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
             right: 20px;
             padding: 1rem 1.5rem;
             border-radius: 0.5rem;
-            background: #4CAF50;
+            background: var(--success-color);
             color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-lg);
             display: none;
             z-index: 1000;
             animation: slideIn 0.3s ease-out;
@@ -322,24 +148,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
         }
 
         .payment-option:hover {
-            background-color: var(--hover-color);
+            background-color: rgba(59, 130, 246, 0.1);
         }
 
         .payment-option input[type="radio"] {
             margin: 0;
+            width: auto;
         }
 
         .payment-option input[type="radio"]:checked + span {
             font-weight: bold;
             color: var(--primary-color);
         }
+        
+        .required {
+            color: var(--danger-color);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Create a New Bet</h1>
-            <a href="home.php" class="btn btn-outline">Back to Home</a>
+            <div class="header-container">
+                <h1>Create a New Bet</h1>
+                <a href="home.php" class="btn btn-outline">Back to Home</a>
+            </div>
         </header>
 
         <?php if ($successMessage): ?>
@@ -355,10 +188,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
         <?php endif; ?>
 
         <?php if (!$hasFriends): ?>
-            <div class="empty-state">
-                <i class="fas fa-user-friends"></i>
-                <p>You need friends to create a bet!</p>
-                <p>Go to the <a href="friends.php">Friends page</a> to add some friends first.</p>
+            <div class="card">
+                <div class="card-body" style="text-align: center; padding: 3rem 1rem;">
+                    <i class="fas fa-user-friends" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>You need friends to create a bet!</h3>
+                    <p>Go to the <a href="friends.php">Friends page</a> to add some friends first.</p>
+                </div>
             </div>
         <?php else: ?>
             <div class="card">
@@ -368,7 +203,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
                         <select id="opponent_id" name="opponent_id" required>
                             <option value="">Select a friend</option>
                             <?php foreach ($friends as $friend): ?>
-                                <option value="<?php echo $friend['user_id']; ?>" <?php echo ($preselectedFriendId == $friend['user_id']) ? 'selected' : ''; ?>>
+                                <?php $friendId = isset($friend['user_id']) ? $friend['user_id'] : $friend['id']; ?>
+                                <option value="<?php echo $friendId; ?>" <?php echo ($preselectedFriendId == $friendId) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($friend['username']); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -446,7 +282,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
                         <input type="date" id="deadline" name="deadline" required>
                     </div>
 
-                    <button type="submit" class="btn btn-block">Create Bet</button>
+                    <button type="submit" class="btn btn-primary">Create Bet</button>
                 </form>
             </div>
         <?php endif; ?>
@@ -532,14 +368,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
                 if (stakeType === 'money') {
                     if (!formData.get('stake_amount') || formData.get('stake_amount') <= 0) {
                         notification.textContent = 'Please enter a valid stake amount';
-                        notification.style.backgroundColor = '#ef4444';
+                        notification.style.backgroundColor = 'var(--danger-color)';
                         notification.style.display = 'block';
                         notification.classList.add('shake');
                         return;
                     }
                 } else if (!formData.get('stake_description')) {
                     notification.textContent = 'Please describe the favor/task';
-                    notification.style.backgroundColor = '#ef4444';
+                    notification.style.backgroundColor = 'var(--danger-color)';
                     notification.style.display = 'block';
                     notification.classList.add('shake');
                     return;
@@ -562,7 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
                 .then(result => {
                     if (result.success) {
                         notification.textContent = result.message || 'Bet created successfully!';
-                        notification.style.backgroundColor = '#4CAF50';
+                        notification.style.backgroundColor = 'var(--success-color)';
                         notification.style.display = 'block';
                         notification.classList.add('shake');
 
@@ -579,7 +415,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
                         }
                     } else {
                         notification.textContent = Array.isArray(result.errors) ? result.errors.join(', ') : result.message || 'An error occurred';
-                        notification.style.backgroundColor = '#ef4444';
+                        notification.style.backgroundColor = 'var(--danger-color)';
                         notification.style.display = 'block';
                         notification.classList.add('shake');
                     }
@@ -587,7 +423,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_SERVER['HTTP_X_REQUESTED_W
                 .catch(error => {
                     console.error('Error:', error);
                     notification.textContent = 'An error occurred. Please try again.';
-                    notification.style.backgroundColor = '#ef4444';
+                    notification.style.backgroundColor = 'var(--danger-color)';
                     notification.style.display = 'block';
                     notification.classList.add('shake');
                 });
