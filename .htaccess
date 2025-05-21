@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /WannaBet/
+
+# Redirect all requests to the public directory
+RewriteCond %{REQUEST_URI} !^/WannaBet/public/
+RewriteRule ^(.*)$ public/$1 [L]
+
+# Handle front controller pattern
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]

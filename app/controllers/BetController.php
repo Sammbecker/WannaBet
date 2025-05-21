@@ -27,6 +27,7 @@ class BetController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return ['success' => false, 'errors' => ['Invalid request method']];
         }
+        
 
         $userId = $_SESSION['user_id'] ?? null;
         if (!$userId) {

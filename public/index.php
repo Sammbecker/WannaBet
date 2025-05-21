@@ -1,10 +1,11 @@
 <?php
 session_start();
 
+// kiko - Main entry point for the application
 // Define base path for includes
 define('BASE_PATH', dirname(__DIR__));
 // Define base URL for links
-define('BASE_URL', '');
+define('BASE_URL', '/WannaBet/public');
 
 // Debug information
 error_reporting(E_ALL);
@@ -18,6 +19,8 @@ require_once BASE_PATH . '/app/controllers/UserController.php';
 
 // Get the URL path from REQUEST_URI instead of $_GET['url']
 $url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+// Remove the base path from the URL
+$url = str_replace('/WannaBet/public/', '', $url);
 $url = trim($url, '/');
 
 // Debug the URL
@@ -35,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'login':
             $result = $userController->login();
             if ($result['success']) {
-                header('Location: /home');
+                header('Location: ' . BASE_URL . '/home');
             } else {
                 // Let the login page handle the error
                 $authController->login();
@@ -44,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'register':
             $result = $userController->register();
             if ($result['success']) {
-                header('Location: /login');
+                header('Location: ' . BASE_URL . '/login');
             } else {
                 // Let the register page handle the error
                 $authController->register();
