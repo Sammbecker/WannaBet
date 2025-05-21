@@ -38,10 +38,13 @@ ini_set('display_errors', 1);
                 <i class="fas fa-arrow-left"></i>
                 Back to Landing
             </a>
-            <a href="/home" class="logo">
-                <i class="fas fa-dice"></i>
-                WannaBet
-            </a>
+            <div class="logo-container">
+                <a href="/home" class="logo">
+                    <i class="fas fa-dice"></i>
+                    WannaBet
+                </a>
+                <img src="https://flagcdn.com/w80/za.png" alt="South African Flag" class="sa-flag" style="height: 30px; margin-left: 10px;">
+            </div>
             <div class="user-info">
                 <div class="trust-score">
                     <i class="fas fa-star"></i>
@@ -54,6 +57,17 @@ ini_set('display_errors', 1);
             </div>
         </div>
     </header>
+
+    <style>
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+        .sa-flag {
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
 
     <div class="container">
         <div class="dashboard-grid">

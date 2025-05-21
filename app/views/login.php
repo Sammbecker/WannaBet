@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             left: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
             z-index: -1;
             animation: rotate 20s linear infinite;
         }
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-header h1 {
             font-size: 2.5rem;
             margin-bottom: 1rem;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg,rgb(0, 253, 93) 0%, #16a34a 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -85,7 +85,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .login-header p {
             color: var(--text-light);
             font-size: 1.1rem;
+            background: linear-gradient(135deg,rgb(0, 253, 93) 0%, #16a34a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+
+        .login-footer {
+            color: var(--text-light);
 
         .login-footer {
             text-align: center;
@@ -100,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: var(--gradient-primary);
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -114,6 +120,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .theme-toggle:hover {
             transform: translateY(-3px);
             box-shadow: var(--shadow-xl);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-2px);
         }
 
         @keyframes rotate {
